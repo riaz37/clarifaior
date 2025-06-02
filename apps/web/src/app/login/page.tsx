@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -17,13 +16,7 @@ import AuthService from "../../lib/auth-service";
 import { useErrorHandler } from "../../lib/error-handler";
 import { useAuthLoading } from "../../lib/loading-hooks";
 import { LoadingButton } from "../../components/loading/LoadingOverlay";
-
-const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
+import { loginSchema, type LoginForm } from "@/validations/auth-validations";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,6 +36,7 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
+    mode: 'onChange',
   });
 
   // Show session expired message

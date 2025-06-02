@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -14,20 +13,7 @@ import { AuthLayout } from "../../components/auth/auth-layout";
 import { Eye, EyeOff, Mail, Lock, User, Building } from "lucide-react";
 import { useAuth } from "../../lib/auth-guard";
 import { useErrorHandler } from "../../lib/error-handler";
-
-const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-  workspaceName: z.string().min(2, "Workspace name must be at least 2 characters"),
-  agreeToTerms: z.boolean().refine(val => val === true, "You must agree to the terms"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type RegisterForm = z.infer<typeof registerSchema>;
+import { registerSchema, type RegisterForm } from "@/validations/auth-validations";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -43,6 +29,7 @@ export default function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+    mode: 'onChange',
   });
 
   const onSubmit = async (data: RegisterForm) => {

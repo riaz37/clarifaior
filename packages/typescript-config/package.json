@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
+  "scripts": {
+    "dev": "echo \"TypeScript config package - no dev server needed\""
+  },
   "publishConfig": {
     "access": "public"
   }

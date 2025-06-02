@@ -126,6 +126,8 @@ export class AuthService {
         email: user.email,
         avatar: user.avatar,
         isEmailVerified: user.isEmailVerified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       },
     };
   }
