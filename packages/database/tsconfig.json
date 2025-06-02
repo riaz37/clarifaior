@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "lib": ["ES2020"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "outDir": "dist",
+    "rootDir": "./",
+    "baseUrl": "./",
+    "paths": {
+      "~/*": ["src/*"],
+      "@database/*": ["src/*"]
+    }
+  },
+  "include": ["src", "drizzle.config.ts"],
+  "exclude": ["dist", "node_modules"]
+}
