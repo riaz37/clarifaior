@@ -1,6 +1,11 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { LoggerService } from '../common/services/logger.service';
 import { EncryptionService } from '../common/services/encryption.service';
+import { DeepSeekService } from './services/deepseek.service';
+import { SlackService } from './services/slack.service';
+import { GmailService } from './services/gmail.service';
+import { NotionService } from './services/notion.service';
+import { PineconeService } from './services/pinecone.service';
 
 // Integration interfaces
 export interface LLMRequest {
@@ -54,6 +59,11 @@ export class IntegrationService {
   constructor(
     private logger: LoggerService,
     private encryptionService: EncryptionService,
+    private deepSeekService: DeepSeekService,
+    private slackService: SlackService,
+    private gmailService: GmailService,
+    private notionService: NotionService,
+    private pineconeService: PineconeService,
   ) {
     this.logger.setContext('IntegrationService');
   }
@@ -69,13 +79,15 @@ export class IntegrationService {
     });
 
     try {
-      // Mock implementation - replace with actual LLM integration
-      if (model.startsWith('gpt-')) {
-        return this.callOpenAI(request);
-      } else if (model.startsWith('claude-')) {
-        return this.callAnthropic(request);
+      // Use DeepSeek for most models, with fallbacks
+      if (model.startsWith('deepseek-') || model.startsWith('gpt-') || model.startsWith('claude-')) {
+        return this.deepSeekService.callLLM(request);
       } else {
-        throw new Error(`Unsupported model: ${model}`);
+        // Fallback to DeepSeek for unknown models
+        return this.deepSeekService.callLLM({
+          ...request,
+          model: 'deepseek-chat',
+        });
       }
     } catch (error) {
       this.logger.error(`LLM call failed: ${error.message}`, error.stack);
@@ -93,8 +105,7 @@ export class IntegrationService {
     });
 
     try {
-      // Mock implementation - replace with actual vector search (Pinecone, etc.)
-      return this.searchPinecone(request);
+      return this.pineconeService.searchMemory(request);
     } catch (error) {
       this.logger.error(`Memory search failed: ${error.message}`, error.stack);
       throw new BadRequestException(`Memory search failed: ${error.message}`);
@@ -111,8 +122,7 @@ export class IntegrationService {
     });
 
     try {
-      // Mock implementation - replace with actual Slack API
-      return this.callSlackAPI(request);
+      return this.slackService.sendMessage(request);
     } catch (error) {
       this.logger.error(`Slack message failed: ${error.message}`, error.stack);
       throw new BadRequestException(`Slack message failed: ${error.message}`);
@@ -129,8 +139,7 @@ export class IntegrationService {
     });
 
     try {
-      // Mock implementation - replace with actual Notion API
-      return this.callNotionAPI(request);
+      return this.notionService.createPage(request);
     } catch (error) {
       this.logger.error(
         `Notion page creation failed: ${error.message}`,
@@ -153,8 +162,7 @@ export class IntegrationService {
     });
 
     try {
-      // Mock implementation - replace with actual email service
-      return this.callEmailService(request);
+      return this.gmailService.sendEmail(request);
     } catch (error) {
       this.logger.error(`Email sending failed: ${error.message}`, error.stack);
       throw new BadRequestException(`Email sending failed: ${error.message}`);
@@ -236,17 +244,7 @@ export class IntegrationService {
     };
   }
 
-  private async searchPinecone(request: MemorySearchRequest): Promise<any[]> {
-    // Mock Pinecone search
-    await this.delay(500);
 
-    return Array.from({ length: Math.min(request.topK, 3) }, (_, i) => ({
-      id: `result-${i + 1}`,
-      score: 0.9 - i * 0.1,
-      content: `Mock search result ${i + 1} for query: ${request.query}`,
-      metadata: { source: 'mock', index: i },
-    }));
-  }
 
   private async callSlackAPI(request: SlackMessageRequest): Promise<any> {
     // Mock Slack API
