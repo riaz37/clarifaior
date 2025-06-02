@@ -4,4 +4,7 @@ export * from "./workspace";
 export * from "./agent";
 export * from "./execution";
 export * from "./integration";
+export * from "./oauth";
+export * from "./webhook";
+export * from "./scheduler";
 export * from "./api";

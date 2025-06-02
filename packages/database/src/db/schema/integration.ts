@@ -13,11 +13,14 @@ import { workspaces } from "./workspace";
 import { users } from "./user";
 
 export const integrationTypeEnum = pgEnum("integration_type", [
+  "deepseek",
+  "gemini",
+  "openai",
+  "anthropic",
   "gmail",
   "slack",
   "notion",
   "webhook",
-  "openai",
   "pinecone",
   "langfuse",
 ]);

@@ -22,6 +22,13 @@
       "when": 1748803017554,
       "tag": "0002_even_lionheart",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1748890212759,
+      "tag": "0003_left_jimmy_woo",
+      "breakpoints": true
     }
   ]
 }

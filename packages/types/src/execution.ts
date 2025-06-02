@@ -6,10 +6,18 @@ export type ExecutionStatus =
   | "failed"
   | "cancelled";
 
+export type TriggerType =
+  | "manual"
+  | "webhook"
+  | "schedule"
+  | "gmail"
+  | "slack"
+  | "api";
+
 export interface Execution {
   id: number;
   agentId: number;
-  triggerType: string;
+  triggerType: TriggerType;
   triggerData?: Record<string, any>;
   status: ExecutionStatus;
   startedAt?: string;
