@@ -1,101 +1,57 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { DashboardLayout } from '../../../components/dashboard/dashboard-layout';
 import { ExecutionCard } from '../../../components/execution/ExecutionCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/card';
 import { Button } from '@repo/ui/button';
 import { Badge } from '@repo/ui/badge';
 import { Input } from '@repo/ui/input';
+import { Spinner } from '@repo/ui/spinner';
 import { ExecutionDetails, ExecutionMetrics } from '../../../components/execution/execution-types';
-import { 
-  Search, 
-  Filter, 
-  RefreshCw, 
-  Play, 
-  TrendingUp, 
-  Clock, 
+import {
+  Search,
+  Filter,
+  RefreshCw,
+  Play,
+  TrendingUp,
+  Clock,
   DollarSign,
   Zap,
   Activity,
   AlertCircle
 } from 'lucide-react';
-
-// Mock data - replace with real API calls
-const mockExecutions: ExecutionDetails[] = [
-  {
-    id: 1001,
-    agentId: 1,
-    agentName: 'Customer Support Bot',
-    status: 'running',
-    triggerType: 'gmail',
-    triggerData: { from: 'customer@example.com', subject: 'Help needed' },
-    startedAt: new Date(Date.now() - 120000).toISOString(),
-    steps: [
-      { id: '1', nodeId: 'trigger-1', nodeType: 'trigger_gmail', status: 'completed', startedAt: new Date().toISOString(), duration: 500, input: {}, output: {} },
-      { id: '2', nodeId: 'llm-1', nodeType: 'prompt_llm', status: 'running', startedAt: new Date().toISOString(), input: {}, logs: [] },
-    ],
-    totalSteps: 3,
-    completedSteps: 1,
-    cost: 0.0023,
-    tokensUsed: 1250,
-  },
-  {
-    id: 1000,
-    agentId: 2,
-    agentName: 'Email Classifier',
-    status: 'completed',
-    triggerType: 'webhook',
-    startedAt: new Date(Date.now() - 300000).toISOString(),
-    completedAt: new Date(Date.now() - 295000).toISOString(),
-    duration: 5000,
-    steps: [
-      { id: '1', nodeId: 'trigger-1', nodeType: 'trigger_webhook', status: 'completed', startedAt: new Date().toISOString(), duration: 200, input: {}, output: {} },
-      { id: '2', nodeId: 'llm-1', nodeType: 'prompt_llm', status: 'completed', startedAt: new Date().toISOString(), duration: 3500, input: {}, output: {} },
-      { id: '3', nodeId: 'action-1', nodeType: 'action_slack', status: 'completed', startedAt: new Date().toISOString(), duration: 1300, input: {}, output: {} },
-    ],
-    totalSteps: 3,
-    completedSteps: 3,
-    cost: 0.0045,
-    tokensUsed: 2100,
-  },
-  {
-    id: 999,
-    agentId: 3,
-    agentName: 'Data Processor',
-    status: 'failed',
-    triggerType: 'schedule',
-    startedAt: new Date(Date.now() - 600000).toISOString(),
-    completedAt: new Date(Date.now() - 590000).toISOString(),
-    duration: 10000,
-    error: 'API rate limit exceeded',
-    steps: [
-      { id: '1', nodeId: 'trigger-1', nodeType: 'trigger_schedule', status: 'completed', startedAt: new Date().toISOString(), duration: 100, input: {}, output: {} },
-      { id: '2', nodeId: 'action-1', nodeType: 'action_notion', status: 'failed', startedAt: new Date().toISOString(), duration: 9900, error: 'Rate limit exceeded', input: {}, logs: [] },
-    ],
-    totalSteps: 2,
-    completedSteps: 1,
-    cost: 0.0001,
-    tokensUsed: 50,
-  },
-];
-
-const mockMetrics: ExecutionMetrics = {
-  totalExecutions: 1247,
-  successfulExecutions: 1228,
-  failedExecutions: 19,
-  averageDuration: 3500,
-  totalCost: 12.45,
-  totalTokens: 125000,
-  successRate: 98.5,
-};
+import {
+  useExecutions,
+  useExecutionMetrics,
+  useCancelExecution,
+  useRetryExecution
+} from '../../../lib/react-query';
+import { useErrorHandler } from '../../../lib/error-handler';
 
 export default function ExecutionsPage() {
-  const [executions, setExecutions] = useState<ExecutionDetails[]>(mockExecutions);
-  const [metrics, setMetrics] = useState<ExecutionMetrics>(mockMetrics);
+  const { handleError } = useErrorHandler();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Fetch real data
+  const {
+    data: executionsData,
+    isLoading: executionsLoading,
+    refetch: refetchExecutions
+  } = useExecutions({ limit: 50 });
+
+  const {
+    data: metrics,
+    isLoading: metricsLoading
+  } = useExecutionMetrics();
+
+  const { mutate: cancelExecution, isPending: isCancelling } = useCancelExecution();
+  const { mutate: retryExecution, isPending: isRetrying } = useRetryExecution();
+
+  const executions = executionsData?.executions || [];
+  const isLoading = executionsLoading || metricsLoading;
 
   const filteredExecutions = executions.filter(execution => {
     const matchesSearch = execution.agentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -105,41 +61,39 @@ export default function ExecutionsPage() {
   });
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
     try {
-      // TODO: Fetch latest executions from API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } finally {
-      setIsRefreshing(false);
+      await refetchExecutions();
+      toast.success('Executions refreshed');
+    } catch (error) {
+      const appError = handleError(error, { context: 'refresh-executions' });
+      toast.error(appError.message);
     }
   };
 
   const handleRetry = async (executionId: number) => {
-    // TODO: Implement retry logic
-    console.log('Retrying execution:', executionId);
+    try {
+      retryExecution(executionId.toString());
+      toast.success('Execution retry started');
+    } catch (error) {
+      const appError = handleError(error, { context: 'retry-execution' });
+      toast.error(appError.message);
+    }
   };
 
   const handleCancel = async (executionId: number) => {
-    // TODO: Implement cancel logic
-    console.log('Cancelling execution:', executionId);
+    try {
+      cancelExecution(executionId.toString());
+      toast.success('Execution cancelled');
+    } catch (error) {
+      const appError = handleError(error, { context: 'cancel-execution' });
+      toast.error(appError.message);
+    }
   };
 
   const handleViewDetails = (executionId: number) => {
     // TODO: Navigate to execution details page
-    console.log('Viewing execution details:', executionId);
+    window.open(`/dashboard/executions/${executionId}`, '_blank');
   };
-
-  // Auto-refresh running executions
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const hasRunning = executions.some(e => e.status === 'running');
-      if (hasRunning) {
-        // TODO: Fetch updates for running executions
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [executions]);
 
   return (
     <DashboardLayout>
@@ -155,10 +109,10 @@ export default function ExecutionsPage() {
           <Button
             variant="outline"
             onClick={handleRefresh}
-            disabled={isRefreshing}
+            disabled={isLoading}
             className="border-white/20 text-white hover:bg-white/10"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
@@ -170,7 +124,11 @@ export default function ExecutionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">Total Executions</p>
-                  <p className="text-2xl font-bold text-white">{metrics.totalExecutions.toLocaleString()}</p>
+                  {isLoading ? (
+                    <Spinner className="h-6 w-6 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-white">{metrics?.totalExecutions?.toLocaleString() || 0}</p>
+                  )}
                 </div>
                 <Activity className="h-8 w-8 text-blue-400" />
               </div>
@@ -182,7 +140,11 @@ export default function ExecutionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">Success Rate</p>
-                  <p className="text-2xl font-bold text-green-400">{metrics.successRate}%</p>
+                  {isLoading ? (
+                    <Spinner className="h-6 w-6 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-green-400">{metrics?.successRate?.toFixed(1) || 0}%</p>
+                  )}
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-400" />
               </div>
@@ -194,7 +156,13 @@ export default function ExecutionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">Avg Duration</p>
-                  <p className="text-2xl font-bold text-purple-400">{(metrics.averageDuration / 1000).toFixed(1)}s</p>
+                  {isLoading ? (
+                    <Spinner className="h-6 w-6 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-purple-400">
+                      {metrics?.averageDuration ? (metrics.averageDuration / 1000).toFixed(1) : 0}s
+                    </p>
+                  )}
                 </div>
                 <Clock className="h-8 w-8 text-purple-400" />
               </div>
@@ -206,7 +174,11 @@ export default function ExecutionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">Total Cost</p>
-                  <p className="text-2xl font-bold text-cyan-400">${metrics.totalCost.toFixed(2)}</p>
+                  {isLoading ? (
+                    <Spinner className="h-6 w-6 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-cyan-400">${metrics?.totalCost?.toFixed(2) || '0.00'}</p>
+                  )}
                 </div>
                 <DollarSign className="h-8 w-8 text-cyan-400" />
               </div>
@@ -251,7 +223,7 @@ export default function ExecutionsPage() {
         </Card>
 
         {/* Running Executions */}
-        {executions.some(e => e.status === 'running') && (
+        {!isLoading && executions.some(e => e.status === 'running') && (
           <div>
             <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
               <Play className="h-5 w-5 mr-2 text-blue-400" />
@@ -278,25 +250,32 @@ export default function ExecutionsPage() {
         {/* Recent Executions */}
         <div>
           <h2 className="text-xl font-semibold text-white mb-4">Recent Executions</h2>
-          <div className="space-y-4">
-            {filteredExecutions.map(execution => (
-              <ExecutionCard
-                key={execution.id}
-                execution={execution}
-                onViewDetails={handleViewDetails}
-                onRetry={execution.status === 'failed' ? handleRetry : undefined}
-                onCancel={execution.status === 'running' ? handleCancel : undefined}
-              />
-            ))}
-          </div>
 
-          {filteredExecutions.length === 0 && (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Spinner className="h-8 w-8" />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredExecutions.map(execution => (
+                <ExecutionCard
+                  key={execution.id}
+                  execution={execution}
+                  onViewDetails={handleViewDetails}
+                  onRetry={execution.status === 'failed' ? handleRetry : undefined}
+                  onCancel={execution.status === 'running' ? handleCancel : undefined}
+                />
+              ))}
+            </div>
+          )}
+
+          {!isLoading && filteredExecutions.length === 0 && (
             <Card className="bg-white/5 border-white/10">
               <CardContent className="p-12 text-center">
                 <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">No executions found</h3>
                 <p className="text-gray-400 mb-4">
-                  {searchQuery || statusFilter !== 'all' 
+                  {searchQuery || statusFilter !== 'all'
                     ? 'Try adjusting your search or filters'
                     : 'No executions have been run yet'
                   }

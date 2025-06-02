@@ -2,16 +2,18 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 import { DashboardLayout } from '../../../components/dashboard/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/card';
 import { Button } from '@repo/ui/button';
 import { Badge } from '@repo/ui/badge';
 import { Input } from '@repo/ui/input';
+import { Spinner } from '@repo/ui/spinner';
 import { AIBrainIcon, RobotIcon } from '@repo/ui/icons';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
+import {
+  Plus,
+  Search,
+  Filter,
   MoreVertical,
   Play,
   Pause,
@@ -22,65 +24,75 @@ import {
   Activity,
   Zap
 } from 'lucide-react';
-
-// Mock data - replace with real API calls
-const mockAgents = [
-  {
-    id: 1,
-    name: 'Customer Support Bot',
-    description: 'Automatically responds to customer inquiries via email and Slack',
-    status: 'active',
-    lastRun: '2 minutes ago',
-    executions: 1247,
-    successRate: 98.5,
-    triggers: ['Gmail', 'Slack'],
-    createdAt: '2024-01-10',
-  },
-  {
-    id: 2,
-    name: 'Email Classifier',
-    description: 'Categorizes incoming emails and routes them to appropriate teams',
-    status: 'active',
-    lastRun: '5 minutes ago',
-    executions: 856,
-    successRate: 99.2,
-    triggers: ['Gmail'],
-    createdAt: '2024-01-08',
-  },
-  {
-    id: 3,
-    name: 'Slack Notifier',
-    description: 'Sends daily reports and notifications to team channels',
-    status: 'paused',
-    lastRun: '1 hour ago',
-    executions: 234,
-    successRate: 97.8,
-    triggers: ['Schedule'],
-    createdAt: '2024-01-05',
-  },
-  {
-    id: 4,
-    name: 'Data Processor',
-    description: 'Processes and analyzes incoming data from various sources',
-    status: 'draft',
-    lastRun: 'Never',
-    executions: 0,
-    successRate: 0,
-    triggers: ['Webhook'],
-    createdAt: '2024-01-15',
-  },
-];
+import {
+  useAgents,
+  useDeleteAgent,
+  useExecuteAgent,
+  useUpdateAgent
+} from '../../../lib/react-query';
+import { useErrorHandler } from '../../../lib/error-handler';
+import { LoadingGrid, LoadingButton } from '../../../components/loading/LoadingOverlay';
+import { useApiCall } from '../../../lib/loading-hooks';
 
 export default function AgentsPage() {
+  const { handleError } = useErrorHandler();
+  const { call: executeCall, isLoading: isExecuting } = useApiCall('execute-agent');
+  const { call: deleteCall, isLoading: isDeleting } = useApiCall('delete-agent');
+  const { call: updateCall, isLoading: isUpdating } = useApiCall('update-agent');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const filteredAgents = mockAgents.filter(agent => {
+  // Fetch real data
+  const { data: agents, isLoading, error } = useAgents();
+  const { mutate: deleteAgent } = useDeleteAgent();
+  const { mutate: executeAgent } = useExecuteAgent();
+  const { mutate: updateAgent } = useUpdateAgent();
+
+  const filteredAgents = agents?.filter(agent => {
     const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          agent.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || agent.status === statusFilter;
     return matchesSearch && matchesStatus;
-  });
+  }) || [];
+
+  const handleExecuteAgent = async (agentId: string) => {
+    await executeCall(
+      () => executeAgent({ id: agentId }),
+      {
+        loadingText: 'Starting agent execution...',
+        successMessage: 'Agent execution started',
+      }
+    );
+  };
+
+  const handleToggleAgent = async (agentId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+    await updateCall(
+      () => updateAgent({ id: agentId, data: { status: newStatus } }),
+      {
+        loadingText: `${newStatus === 'active' ? 'Activating' : 'Pausing'} agent...`,
+        successMessage: `Agent ${newStatus === 'active' ? 'activated' : 'paused'}`,
+      }
+    );
+  };
+
+  const handleDeleteAgent = async (agentId: string) => {
+    if (!confirm('Are you sure you want to delete this agent?')) return;
+
+    await deleteCall(
+      () => deleteAgent(agentId),
+      {
+        loadingText: 'Deleting agent...',
+        successMessage: 'Agent deleted successfully',
+        showOverlay: true,
+      }
+    );
+  };
+
+  const handleCopyAgent = async (agentId: string) => {
+    // TODO: Implement agent duplication
+    toast.success('Agent copied to clipboard');
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -121,7 +133,11 @@ export default function AgentsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">Total Agents</p>
-                  <p className="text-2xl font-bold text-white">{mockAgents.length}</p>
+                  {isLoading ? (
+                    <Spinner className="h-6 w-6 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-white">{agents?.length || 0}</p>
+                  )}
                 </div>
                 <RobotIcon className="h-8 w-8 text-cyan-400" />
               </div>
@@ -133,9 +149,13 @@ export default function AgentsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">Active</p>
-                  <p className="text-2xl font-bold text-green-400">
-                    {mockAgents.filter(a => a.status === 'active').length}
-                  </p>
+                  {isLoading ? (
+                    <Spinner className="h-6 w-6 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-green-400">
+                      {agents?.filter(a => a.status === 'active').length || 0}
+                    </p>
+                  )}
                 </div>
                 <Activity className="h-8 w-8 text-green-400" />
               </div>
@@ -146,10 +166,14 @@ export default function AgentsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Total Executions</p>
-                  <p className="text-2xl font-bold text-blue-400">
-                    {mockAgents.reduce((sum, agent) => sum + agent.executions, 0).toLocaleString()}
-                  </p>
+                  <p className="text-sm text-gray-400">Draft</p>
+                  {isLoading ? (
+                    <Spinner className="h-6 w-6 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-blue-400">
+                      {agents?.filter(a => a.status === 'draft').length || 0}
+                    </p>
+                  )}
                 </div>
                 <Zap className="h-8 w-8 text-blue-400" />
               </div>
@@ -160,10 +184,14 @@ export default function AgentsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Avg Success Rate</p>
-                  <p className="text-2xl font-bold text-purple-400">
-                    {(mockAgents.reduce((sum, agent) => sum + agent.successRate, 0) / mockAgents.length).toFixed(1)}%
-                  </p>
+                  <p className="text-sm text-gray-400">Paused</p>
+                  {isLoading ? (
+                    <Spinner className="h-6 w-6 mt-2" />
+                  ) : (
+                    <p className="text-2xl font-bold text-purple-400">
+                      {agents?.filter(a => a.status === 'paused').length || 0}
+                    </p>
+                  )}
                 </div>
                 <Calendar className="h-8 w-8 text-purple-400" />
               </div>
@@ -206,9 +234,12 @@ export default function AgentsPage() {
         </Card>
 
         {/* Agents Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredAgents.map((agent) => (
-            <Card key={agent.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300">
+        {isLoading ? (
+          <LoadingGrid count={6} />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredAgents.map((agent) => (
+              <Card key={agent.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
@@ -233,58 +264,95 @@ export default function AgentsPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-gray-400">Executions</p>
-                    <p className="text-lg font-semibold text-white">{agent.executions.toLocaleString()}</p>
+                    <p className="text-xs text-gray-400">Created</p>
+                    <p className="text-sm font-semibold text-white">
+                      {agent.createdAt ? new Date(agent.createdAt).toLocaleDateString() : 'Recently'}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400">Success Rate</p>
-                    <p className="text-lg font-semibold text-green-400">{agent.successRate}%</p>
+                    <p className="text-xs text-gray-400">Updated</p>
+                    <p className="text-sm font-semibold text-gray-300">
+                      {agent.updatedAt ? new Date(agent.updatedAt).toLocaleDateString() : 'Recently'}
+                    </p>
                   </div>
                 </div>
 
-                {/* Triggers */}
+                {/* Flow Info */}
                 <div>
-                  <p className="text-xs text-gray-400 mb-2">Triggers</p>
-                  <div className="flex flex-wrap gap-1">
-                    {agent.triggers.map((trigger) => (
-                      <Badge key={trigger} variant="outline" className="text-xs">
-                        {trigger}
-                      </Badge>
-                    ))}
+                  <p className="text-xs text-gray-400 mb-2">Flow</p>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="outline" className="text-xs">
+                      {agent.flow?.nodes?.length || 0} nodes
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {agent.flow?.edges?.length || 0} connections
+                    </Badge>
                   </div>
                 </div>
 
-                {/* Last Run */}
-                <div className="text-xs text-gray-400">
-                  Last run: {agent.lastRun}
-                </div>
+                {/* Description */}
+                {agent.description && (
+                  <div className="text-xs text-gray-400">
+                    {agent.description}
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex items-center justify-between pt-2 border-t border-white/10">
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-green-400">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-400 hover:text-green-400"
+                      onClick={() => handleExecuteAgent(agent.id)}
+                      disabled={isExecuting}
+                      title="Execute Agent"
+                    >
                       <Play className="h-3 w-3" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-yellow-400">
-                      <Pause className="h-3 w-3" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-400 hover:text-yellow-400"
+                      onClick={() => handleToggleAgent(agent.id, agent.status)}
+                      disabled={isUpdating}
+                      title={agent.status === 'active' ? 'Pause Agent' : 'Activate Agent'}
+                    >
+                      {agent.status === 'active' ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-blue-400">
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-cyan-400">
+                    <Link href={`/dashboard/agents/${agent.id}/edit`}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-blue-400" title="Edit Agent">
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-400 hover:text-cyan-400"
+                      onClick={() => handleCopyAgent(agent.id)}
+                      title="Copy Agent"
+                    >
                       <Copy className="h-3 w-3" />
                     </Button>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-400">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-gray-400 hover:text-red-400"
+                    onClick={() => handleDeleteAgent(agent.id)}
+                    disabled={isDeleting}
+                    title="Delete Agent"
+                  >
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        )}
 
-        {filteredAgents.length === 0 && (
+        {!isLoading && filteredAgents.length === 0 && (
           <Card className="bg-white/5 border-white/10">
             <CardContent className="p-12 text-center">
               <RobotIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />

@@ -5,11 +5,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Spinner } from "@repo/ui/spinner";
 import { AuthLayout } from "../../components/auth/auth-layout";
 import { Eye, EyeOff, Mail, Lock, User, Building } from "lucide-react";
+import { useAuth } from "../../lib/auth-guard";
+import { useErrorHandler } from "../../lib/error-handler";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -26,6 +30,9 @@ const registerSchema = z.object({
 type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { register: registerUser } = useAuth();
+  const { handleError } = useErrorHandler();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,11 +48,17 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
     try {
-      // TODO: Implement register API call
-      console.log("Register data:", data);
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      await registerUser({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        workspaceName: data.workspaceName,
+      });
+      toast.success('Account created successfully! Welcome to Clarifaior.');
+      router.push('/dashboard');
     } catch (error) {
-      console.error("Register error:", error);
+      const appError = handleError(error, { context: 'register' });
+      toast.error(appError.message);
     } finally {
       setIsLoading(false);
     }

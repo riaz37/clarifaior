@@ -1,4 +1,4 @@
-# 📧 Gmail OAuth & Push Notifications Setup
+ # 📧 Gmail OAuth & Push Notifications Setup
 
 This guide covers setting up Gmail OAuth flows and real-time email triggers for Clarifaior.
 
