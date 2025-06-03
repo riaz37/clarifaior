@@ -80,7 +80,11 @@ export class IntegrationService {
 
     try {
       // Use DeepSeek for most models, with fallbacks
-      if (model.startsWith('deepseek-') || model.startsWith('gpt-') || model.startsWith('claude-')) {
+      if (
+        model.startsWith('deepseek-') ||
+        model.startsWith('gpt-') ||
+        model.startsWith('claude-')
+      ) {
         return this.deepSeekService.callLLM(request);
       } else {
         // Fallback to DeepSeek for unknown models
@@ -243,8 +247,6 @@ export class IntegrationService {
       cost,
     };
   }
-
-
 
   private async callSlackAPI(request: SlackMessageRequest): Promise<any> {
     // Mock Slack API

@@ -1,15 +1,24 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
-import { DashboardLayout } from '../../../components/dashboard/dashboard-layout';
-import { ExecutionCard } from '../../../components/execution/ExecutionCard';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/card';
-import { Button } from '@repo/ui/button';
-import { Badge } from '@repo/ui/badge';
-import { Input } from '@repo/ui/input';
-import { Spinner } from '@repo/ui/spinner';
-import { ExecutionDetails, ExecutionMetrics } from '../../../components/execution/execution-types';
+import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import { DashboardLayout } from "../../../components/dashboard/dashboard-layout";
+import { ExecutionCard } from "../../../components/execution/ExecutionCard";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/card";
+import { Button } from "@repo/ui/button";
+import { Badge } from "@repo/ui/badge";
+import { Input } from "@repo/ui/input";
+import { Spinner } from "@repo/ui/spinner";
+import {
+  ExecutionDetails,
+  ExecutionMetrics,
+} from "../../../components/execution/execution-types";
 import {
   Search,
   Filter,
@@ -20,52 +29,52 @@ import {
   DollarSign,
   Zap,
   Activity,
-  AlertCircle
-} from 'lucide-react';
+  AlertCircle,
+} from "lucide-react";
 import {
   useExecutions,
   useExecutionMetrics,
   useCancelExecution,
-  useRetryExecution
-} from '../../../lib/react-query';
-import { useErrorHandler } from '../../../lib/error-handler';
+  useRetryExecution,
+} from "../../../lib/react-query";
+import { useErrorHandler } from "../../../lib/error-handler";
 
 export default function ExecutionsPage() {
   const { handleError } = useErrorHandler();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Fetch real data
   const {
     data: executionsData,
     isLoading: executionsLoading,
-    refetch: refetchExecutions
+    refetch: refetchExecutions,
   } = useExecutions({ limit: 50 });
 
-  const {
-    data: metrics,
-    isLoading: metricsLoading
-  } = useExecutionMetrics();
+  const { data: metrics, isLoading: metricsLoading } = useExecutionMetrics();
 
-  const { mutate: cancelExecution, isPending: isCancelling } = useCancelExecution();
+  const { mutate: cancelExecution, isPending: isCancelling } =
+    useCancelExecution();
   const { mutate: retryExecution, isPending: isRetrying } = useRetryExecution();
 
   const executions = executionsData?.executions || [];
   const isLoading = executionsLoading || metricsLoading;
 
-  const filteredExecutions = executions.filter(execution => {
-    const matchesSearch = execution.agentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         execution.id.toString().includes(searchQuery);
-    const matchesStatus = statusFilter === 'all' || execution.status === statusFilter;
+  const filteredExecutions = executions.filter((execution) => {
+    const matchesSearch =
+      execution.agentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      execution.id.toString().includes(searchQuery);
+    const matchesStatus =
+      statusFilter === "all" || execution.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const handleRefresh = async () => {
     try {
       await refetchExecutions();
-      toast.success('Executions refreshed');
+      toast.success("Executions refreshed");
     } catch (error) {
-      const appError = handleError(error, { context: 'refresh-executions' });
+      const appError = handleError(error, { context: "refresh-executions" });
       toast.error(appError.message);
     }
   };
@@ -73,9 +82,9 @@ export default function ExecutionsPage() {
   const handleRetry = async (executionId: number) => {
     try {
       retryExecution(executionId.toString());
-      toast.success('Execution retry started');
+      toast.success("Execution retry started");
     } catch (error) {
-      const appError = handleError(error, { context: 'retry-execution' });
+      const appError = handleError(error, { context: "retry-execution" });
       toast.error(appError.message);
     }
   };
@@ -83,16 +92,16 @@ export default function ExecutionsPage() {
   const handleCancel = async (executionId: number) => {
     try {
       cancelExecution(executionId.toString());
-      toast.success('Execution cancelled');
+      toast.success("Execution cancelled");
     } catch (error) {
-      const appError = handleError(error, { context: 'cancel-execution' });
+      const appError = handleError(error, { context: "cancel-execution" });
       toast.error(appError.message);
     }
   };
 
   const handleViewDetails = (executionId: number) => {
     // TODO: Navigate to execution details page
-    window.open(`/dashboard/executions/${executionId}`, '_blank');
+    window.open(`/dashboard/executions/${executionId}`, "_blank");
   };
 
   return (
@@ -112,7 +121,9 @@ export default function ExecutionsPage() {
             disabled={isLoading}
             className="border-white/20 text-white hover:bg-white/10"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
@@ -127,7 +138,9 @@ export default function ExecutionsPage() {
                   {isLoading ? (
                     <Spinner className="h-6 w-6 mt-2" />
                   ) : (
-                    <p className="text-2xl font-bold text-white">{metrics?.totalExecutions?.toLocaleString() || 0}</p>
+                    <p className="text-2xl font-bold text-white">
+                      {metrics?.totalExecutions?.toLocaleString() || 0}
+                    </p>
                   )}
                 </div>
                 <Activity className="h-8 w-8 text-blue-400" />
@@ -143,7 +156,9 @@ export default function ExecutionsPage() {
                   {isLoading ? (
                     <Spinner className="h-6 w-6 mt-2" />
                   ) : (
-                    <p className="text-2xl font-bold text-green-400">{metrics?.successRate?.toFixed(1) || 0}%</p>
+                    <p className="text-2xl font-bold text-green-400">
+                      {metrics?.successRate?.toFixed(1) || 0}%
+                    </p>
                   )}
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-400" />
@@ -160,7 +175,10 @@ export default function ExecutionsPage() {
                     <Spinner className="h-6 w-6 mt-2" />
                   ) : (
                     <p className="text-2xl font-bold text-purple-400">
-                      {metrics?.averageDuration ? (metrics.averageDuration / 1000).toFixed(1) : 0}s
+                      {metrics?.averageDuration
+                        ? (metrics.averageDuration / 1000).toFixed(1)
+                        : 0}
+                      s
                     </p>
                   )}
                 </div>
@@ -177,7 +195,9 @@ export default function ExecutionsPage() {
                   {isLoading ? (
                     <Spinner className="h-6 w-6 mt-2" />
                   ) : (
-                    <p className="text-2xl font-bold text-cyan-400">${metrics?.totalCost?.toFixed(2) || '0.00'}</p>
+                    <p className="text-2xl font-bold text-cyan-400">
+                      ${metrics?.totalCost?.toFixed(2) || "0.00"}
+                    </p>
                   )}
                 </div>
                 <DollarSign className="h-8 w-8 text-cyan-400" />
@@ -202,7 +222,7 @@ export default function ExecutionsPage() {
                   />
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Filter className="h-4 w-4 text-gray-400" />
                 <select
@@ -223,19 +243,19 @@ export default function ExecutionsPage() {
         </Card>
 
         {/* Running Executions */}
-        {!isLoading && executions.some(e => e.status === 'running') && (
+        {!isLoading && executions.some((e) => e.status === "running") && (
           <div>
             <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
               <Play className="h-5 w-5 mr-2 text-blue-400" />
               Currently Running
               <Badge variant="running" className="ml-2">
-                {executions.filter(e => e.status === 'running').length}
+                {executions.filter((e) => e.status === "running").length}
               </Badge>
             </h2>
             <div className="space-y-4">
               {executions
-                .filter(e => e.status === 'running')
-                .map(execution => (
+                .filter((e) => e.status === "running")
+                .map((execution) => (
                   <ExecutionCard
                     key={execution.id}
                     execution={execution}
@@ -249,7 +269,9 @@ export default function ExecutionsPage() {
 
         {/* Recent Executions */}
         <div>
-          <h2 className="text-xl font-semibold text-white mb-4">Recent Executions</h2>
+          <h2 className="text-xl font-semibold text-white mb-4">
+            Recent Executions
+          </h2>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -257,13 +279,17 @@ export default function ExecutionsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredExecutions.map(execution => (
+              {filteredExecutions.map((execution) => (
                 <ExecutionCard
                   key={execution.id}
                   execution={execution}
                   onViewDetails={handleViewDetails}
-                  onRetry={execution.status === 'failed' ? handleRetry : undefined}
-                  onCancel={execution.status === 'running' ? handleCancel : undefined}
+                  onRetry={
+                    execution.status === "failed" ? handleRetry : undefined
+                  }
+                  onCancel={
+                    execution.status === "running" ? handleCancel : undefined
+                  }
                 />
               ))}
             </div>
@@ -273,12 +299,13 @@ export default function ExecutionsPage() {
             <Card className="bg-white/5 border-white/10">
               <CardContent className="p-12 text-center">
                 <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">No executions found</h3>
+                <h3 className="text-lg font-medium text-white mb-2">
+                  No executions found
+                </h3>
                 <p className="text-gray-400 mb-4">
-                  {searchQuery || statusFilter !== 'all'
-                    ? 'Try adjusting your search or filters'
-                    : 'No executions have been run yet'
-                  }
+                  {searchQuery || statusFilter !== "all"
+                    ? "Try adjusting your search or filters"
+                    : "No executions have been run yet"}
                 </p>
               </CardContent>
             </Card>

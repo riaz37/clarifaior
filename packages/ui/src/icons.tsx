@@ -16,10 +16,10 @@ const iconSizes = {
 };
 
 // AI Brain Icon
-export const AIBrainIcon: React.FC<IconProps> = ({ 
-  className, 
-  size = "default", 
-  ...props 
+export const AIBrainIcon: React.FC<IconProps> = ({
+  className,
+  size = "default",
+  ...props
 }) => (
   <svg
     className={cn(iconSizes[size], "text-current", className)}
@@ -40,10 +40,10 @@ export const AIBrainIcon: React.FC<IconProps> = ({
 );
 
 // Robot Icon
-export const RobotIcon: React.FC<IconProps> = ({ 
-  className, 
-  size = "default", 
-  ...props 
+export const RobotIcon: React.FC<IconProps> = ({
+  className,
+  size = "default",
+  ...props
 }) => (
   <svg
     className={cn(iconSizes[size], "text-current", className)}
@@ -61,10 +61,10 @@ export const RobotIcon: React.FC<IconProps> = ({
 );
 
 // Flow/Network Icon
-export const FlowIcon: React.FC<IconProps> = ({ 
-  className, 
-  size = "default", 
-  ...props 
+export const FlowIcon: React.FC<IconProps> = ({
+  className,
+  size = "default",
+  ...props
 }) => (
   <svg
     className={cn(iconSizes[size], "text-current", className)}
@@ -83,10 +83,10 @@ export const FlowIcon: React.FC<IconProps> = ({
 );
 
 // Lightning/Trigger Icon
-export const TriggerIcon: React.FC<IconProps> = ({ 
-  className, 
-  size = "default", 
-  ...props 
+export const TriggerIcon: React.FC<IconProps> = ({
+  className,
+  size = "default",
+  ...props
 }) => (
   <svg
     className={cn(iconSizes[size], "text-current", className)}
@@ -100,10 +100,10 @@ export const TriggerIcon: React.FC<IconProps> = ({
 );
 
 // Gear/Settings Icon
-export const GearIcon: React.FC<IconProps> = ({ 
-  className, 
-  size = "default", 
-  ...props 
+export const GearIcon: React.FC<IconProps> = ({
+  className,
+  size = "default",
+  ...props
 }) => (
   <svg
     className={cn(iconSizes[size], "text-current", className)}
@@ -113,36 +113,56 @@ export const GearIcon: React.FC<IconProps> = ({
     {...props}
   >
     <circle cx="12" cy="12" r="3" strokeWidth={2} />
-    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" strokeWidth={2} />
+    <path
+      d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"
+      strokeWidth={2}
+    />
   </svg>
 );
 
 // Status Icons
-export const StatusIcon: React.FC<IconProps & { status: "success" | "error" | "warning" | "info" }> = ({ 
-  status,
-  className, 
-  size = "default", 
-  ...props 
-}) => {
+export const StatusIcon: React.FC<
+  IconProps & { status: "success" | "error" | "warning" | "info" }
+> = ({ status, className, size = "default", ...props }) => {
   const colors = {
     success: "text-green-500",
-    error: "text-red-500", 
+    error: "text-red-500",
     warning: "text-yellow-500",
     info: "text-blue-500",
   };
 
   const icons = {
     success: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 13l4 4L19 7"
+      />
     ),
     error: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M6 18L18 6M6 6l12 12"
+      />
     ),
     warning: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+      />
     ),
     info: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
     ),
   };
 
@@ -160,10 +180,10 @@ export const StatusIcon: React.FC<IconProps & { status: "success" | "error" | "w
 };
 
 // Animated AI Pulse Icon
-export const AIPulseIcon: React.FC<IconProps> = ({ 
-  className, 
-  size = "default", 
-  ...props 
+export const AIPulseIcon: React.FC<IconProps> = ({
+  className,
+  size = "default",
+  ...props
 }) => (
   <div className={cn("relative", iconSizes[size])}>
     <svg

@@ -4,7 +4,7 @@ export interface OAuthToken {
   id: number;
   userId: number;
   workspaceId: number;
-  provider: 'google' | 'slack' | 'notion' | 'github';
+  provider: "google" | "slack" | "notion" | "github";
   providerAccountId?: string;
   accessToken: string;
   refreshToken?: string;
@@ -49,7 +49,7 @@ export interface IntegrationConnection {
 
 export interface OAuthInitiateRequest {
   workspaceId: number;
-  provider: 'google' | 'slack' | 'notion';
+  provider: "google" | "slack" | "notion";
   state?: string;
 }
 

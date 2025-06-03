@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import AuthService from './auth-service';
-import { User } from '@repo/types';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import AuthService from "./auth-service";
+import { User } from "@repo/types";
+import { Loader2 } from "lucide-react";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -22,26 +22,24 @@ interface AuthState {
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [
-  '/',
-  '/login',
-  '/register',
-  '/forgot-password',
-  '/reset-password',
-  '/verify-email',
-  '/oauth/callback',
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+  "/oauth/callback",
 ];
 
 // Routes that require authentication
-const PROTECTED_ROUTES = [
-  '/dashboard',
-];
+const PROTECTED_ROUTES = ["/dashboard"];
 
-export function AuthGuard({ 
-  children, 
-  requireAuth = true, 
+export function AuthGuard({
+  children,
+  requireAuth = true,
   requiredRole,
   requiredPermissions = [],
-  fallback 
+  fallback,
 }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -57,11 +55,11 @@ export function AuthGuard({
 
   const checkAuth = async () => {
     try {
-      setAuthState(prev => ({ ...prev, isLoading: true }));
-      
+      setAuthState((prev) => ({ ...prev, isLoading: true }));
+
       const isAuthenticated = AuthService.isAuthenticated();
       const user = AuthService.getCurrentUser();
-      
+
       if (isAuthenticated && user) {
         // Verify token is still valid by making a test request
         try {
@@ -88,7 +86,7 @@ export function AuthGuard({
         });
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error("Auth check failed:", error);
       setAuthState({
         isLoading: false,
         isAuthenticated: false,
@@ -99,23 +97,25 @@ export function AuthGuard({
 
   // Show loading spinner while checking auth
   if (authState.isLoading) {
-    return fallback || (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-cyan-400 mx-auto mb-4" />
-          <p className="text-white">Loading...</p>
+    return (
+      fallback || (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-cyan-400 mx-auto mb-4" />
+            <p className="text-white">Loading...</p>
+          </div>
         </div>
-      </div>
+      )
     );
   }
 
   // Check if current route requires authentication
-  const isPublicRoute = PUBLIC_ROUTES.some(route => 
-    pathname === route || pathname.startsWith(route + '/')
+  const isPublicRoute = PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(route + "/"),
   );
-  
-  const isProtectedRoute = PROTECTED_ROUTES.some(route => 
-    pathname.startsWith(route)
+
+  const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
+    pathname.startsWith(route),
   );
 
   // Redirect unauthenticated users from protected routes
@@ -126,18 +126,27 @@ export function AuthGuard({
   }
 
   // Redirect authenticated users from auth pages
-  if (authState.isAuthenticated && (pathname === '/login' || pathname === '/register')) {
-    router.replace('/dashboard');
+  if (
+    authState.isAuthenticated &&
+    (pathname === "/login" || pathname === "/register")
+  ) {
+    router.replace("/dashboard");
     return null;
   }
 
   // Check role requirements
-  if (authState.isAuthenticated && requiredRole && authState.user?.role !== requiredRole) {
+  if (
+    authState.isAuthenticated &&
+    requiredRole &&
+    authState.user?.role !== requiredRole
+  ) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-400 text-xl mb-4">Access Denied</div>
-          <p className="text-gray-400">You don't have the required role to access this page.</p>
+          <p className="text-gray-400">
+            You don't have the required role to access this page.
+          </p>
           <button
             onClick={() => router.back()}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -152,16 +161,20 @@ export function AuthGuard({
   // Check permission requirements
   if (authState.isAuthenticated && requiredPermissions.length > 0) {
     const userPermissions = authState.user?.permissions || [];
-    const hasAllPermissions = requiredPermissions.every(permission => 
-      userPermissions.includes(permission)
+    const hasAllPermissions = requiredPermissions.every((permission) =>
+      userPermissions.includes(permission),
     );
 
     if (!hasAllPermissions) {
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-red-400 text-xl mb-4">Insufficient Permissions</div>
-            <p className="text-gray-400">You don't have the required permissions to access this page.</p>
+            <div className="text-red-400 text-xl mb-4">
+              Insufficient Permissions
+            </div>
+            <p className="text-gray-400">
+              You don't have the required permissions to access this page.
+            </p>
             <button
               onClick={() => router.back()}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -189,7 +202,7 @@ export function useAuth() {
     const checkAuth = () => {
       const isAuthenticated = AuthService.isAuthenticated();
       const user = AuthService.getCurrentUser();
-      
+
       setAuthState({
         isLoading: false,
         isAuthenticated,
@@ -201,17 +214,17 @@ export function useAuth() {
 
     // Listen for auth changes
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'clarifaior_access_token' || e.key === 'clarifaior_user') {
+      if (e.key === "clarifaior_access_token" || e.key === "clarifaior_user") {
         checkAuth();
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   const login = async (credentials: { email: string; password: string }) => {
-    setAuthState(prev => ({ ...prev, isLoading: true }));
+    setAuthState((prev) => ({ ...prev, isLoading: true }));
     try {
       const authResponse = await AuthService.login(credentials);
       setAuthState({
@@ -221,13 +234,13 @@ export function useAuth() {
       });
       return authResponse;
     } catch (error) {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      setAuthState((prev) => ({ ...prev, isLoading: false }));
       throw error;
     }
   };
 
   const logout = async () => {
-    setAuthState(prev => ({ ...prev, isLoading: true }));
+    setAuthState((prev) => ({ ...prev, isLoading: true }));
     try {
       await AuthService.logout();
       setAuthState({
@@ -251,7 +264,7 @@ export function useAuth() {
     password: string;
     workspaceName?: string;
   }) => {
-    setAuthState(prev => ({ ...prev, isLoading: true }));
+    setAuthState((prev) => ({ ...prev, isLoading: true }));
     try {
       const authResponse = await AuthService.register(userData);
       setAuthState({
@@ -261,7 +274,7 @@ export function useAuth() {
       });
       return authResponse;
     } catch (error) {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      setAuthState((prev) => ({ ...prev, isLoading: false }));
       throw error;
     }
   };
@@ -272,7 +285,7 @@ export function useAuth() {
     logout,
     register,
     hasRole: (role: string) => authState.user?.role === role,
-    hasPermission: (permission: string) => 
+    hasPermission: (permission: string) =>
       authState.user?.permissions?.includes(permission) || false,
   };
 }
@@ -284,7 +297,7 @@ export function withAuth<T extends Record<string, any>>(
     requireAuth?: boolean;
     requiredRole?: string;
     requiredPermissions?: string[];
-  }
+  },
 ) {
   return function AuthenticatedComponent(props: T) {
     return (

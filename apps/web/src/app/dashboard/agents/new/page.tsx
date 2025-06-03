@@ -1,27 +1,33 @@
 "use client";
 
-import { useState } from 'react';
-import { DashboardLayout } from '../../../../components/dashboard/dashboard-layout';
-import { FlowEditor } from '../../../../components/flow/FlowEditor';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/card';
-import { Button } from '@repo/ui/button';
-import { Input } from '@repo/ui/input';
-import { Badge } from '@repo/ui/badge';
-import { 
-  ArrowLeft, 
-  Save, 
-  Play, 
-  Settings, 
+import { useState } from "react";
+import { DashboardLayout } from "../../../../components/dashboard/dashboard-layout";
+import { FlowEditor } from "../../../../components/flow/FlowEditor";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/card";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Badge } from "@repo/ui/badge";
+import {
+  ArrowLeft,
+  Save,
+  Play,
+  Settings,
   Bot,
   Zap,
   Clock,
-  CheckCircle
-} from 'lucide-react';
-import { Node, Edge } from 'reactflow';
+  CheckCircle,
+} from "lucide-react";
+import { Node, Edge } from "reactflow";
 
 export default function NewAgentPage() {
-  const [agentName, setAgentName] = useState('');
-  const [agentDescription, setAgentDescription] = useState('');
+  const [agentName, setAgentName] = useState("");
+  const [agentDescription, setAgentDescription] = useState("");
   const [isDeploying, setIsDeploying] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -29,8 +35,8 @@ export default function NewAgentPage() {
     setIsSaving(true);
     try {
       // TODO: Implement save to backend
-      console.log('Saving flow:', { nodes, edges });
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      console.log("Saving flow:", { nodes, edges });
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
     } finally {
       setIsSaving(false);
     }
@@ -38,16 +44,16 @@ export default function NewAgentPage() {
 
   const handleExecuteFlow = async () => {
     // TODO: Implement flow execution
-    console.log('Executing flow...');
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate execution
+    console.log("Executing flow...");
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate execution
   };
 
   const handleDeploy = async () => {
     setIsDeploying(true);
     try {
       // TODO: Implement deployment
-      console.log('Deploying agent...');
-      await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate deployment
+      console.log("Deploying agent...");
+      await new Promise((resolve) => setTimeout(resolve, 3000)); // Simulate deployment
     } finally {
       setIsDeploying(false);
     }
@@ -68,9 +74,11 @@ export default function NewAgentPage() {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              
+
               <div>
-                <h1 className="text-2xl font-bold text-white">Create New Agent</h1>
+                <h1 className="text-2xl font-bold text-white">
+                  Create New Agent
+                </h1>
                 <p className="text-gray-400 mt-1">
                   Build your AI agent with drag-and-drop simplicity
                 </p>
@@ -114,7 +122,9 @@ export default function NewAgentPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Name</label>
+                  <label className="text-xs text-gray-400 mb-1 block">
+                    Name
+                  </label>
                   <Input
                     placeholder="e.g., Customer Support Bot"
                     value={agentName}
@@ -124,7 +134,9 @@ export default function NewAgentPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Description</label>
+                  <label className="text-xs text-gray-400 mb-1 block">
+                    Description
+                  </label>
                   <Input
                     placeholder="What does this agent do?"
                     value={agentDescription}
@@ -145,7 +157,9 @@ export default function NewAgentPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Auto-retry failed executions</span>
+                  <span className="text-xs text-gray-400">
+                    Auto-retry failed executions
+                  </span>
                   <input type="checkbox" className="rounded" defaultChecked />
                 </div>
                 <div className="flex items-center justify-between">
@@ -153,10 +167,12 @@ export default function NewAgentPage() {
                   <input type="checkbox" className="rounded" defaultChecked />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Timeout (seconds)</span>
-                  <Input 
-                    type="number" 
-                    defaultValue="300" 
+                  <span className="text-xs text-gray-400">
+                    Timeout (seconds)
+                  </span>
+                  <Input
+                    type="number"
+                    defaultValue="300"
                     className="w-16 h-6 text-xs"
                     variant="ai"
                   />
@@ -174,11 +190,15 @@ export default function NewAgentPage() {
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">Nodes</span>
-                  <Badge variant="outline" className="text-xs">0</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    0
+                  </Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">Connections</span>
-                  <Badge variant="outline" className="text-xs">0</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    0
+                  </Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">Last saved</span>

@@ -6,6 +6,8 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Param,
+  Delete,
 } from '@nestjs/common';
 import { IntegrationService } from './integration.service';
 import { DeepSeekService } from './services/deepseek.service';
@@ -189,7 +191,9 @@ export class IntegrationsController {
         configured: !!process.env.NOTION_TOKEN,
       },
       pinecone: {
-        connected: await this.pineconeService.testConnection().catch(() => false),
+        connected: await this.pineconeService
+          .testConnection()
+          .catch(() => false),
         configured: !!process.env.PINECONE_API_KEY,
       },
     });
@@ -205,14 +209,22 @@ export class IntegrationsController {
   @Get('notion/databases/:databaseId/properties')
   @RequirePermissions(Permission.INTEGRATION_READ)
   async getNotionDatabaseProperties(@Param('databaseId') databaseId: string) {
-    const properties = await this.notionService.getDatabaseProperties(databaseId);
+    const properties =
+      await this.notionService.getDatabaseProperties(databaseId);
     return ResponseUtil.success(properties);
   }
 
   @Post('test/notion-page')
   @RequirePermissions(Permission.INTEGRATION_CREATE)
   @HttpCode(HttpStatus.OK)
-  async testNotionPage(@Body() body: { database: string; title: string; properties?: Record<string, any> }) {
+  async testNotionPage(
+    @Body()
+    body: {
+      database: string;
+      title: string;
+      properties?: Record<string, any>;
+    },
+  ) {
     const { database, title, properties = {} } = body;
 
     const result = await this.integrationService.createNotionPage({
@@ -227,7 +239,9 @@ export class IntegrationsController {
   @Post('test/memory-search')
   @RequirePermissions(Permission.INTEGRATION_READ)
   @HttpCode(HttpStatus.OK)
-  async testMemorySearch(@Body() body: { query: string; topK?: number; threshold?: number }) {
+  async testMemorySearch(
+    @Body() body: { query: string; topK?: number; threshold?: number },
+  ) {
     const { query, topK = 5, threshold = 0.7 } = body;
 
     const result = await this.integrationService.searchMemory({
@@ -249,7 +263,14 @@ export class IntegrationsController {
   @Post('pinecone/store')
   @RequirePermissions(Permission.INTEGRATION_CREATE)
   @HttpCode(HttpStatus.OK)
-  async storeMemory(@Body() body: { id: string; content: string; metadata?: Record<string, any> }) {
+  async storeMemory(
+    @Body()
+    body: {
+      id: string;
+      content: string;
+      metadata?: Record<string, any>;
+    },
+  ) {
     const { id, content, metadata } = body;
 
     await this.pineconeService.storeMemory({
@@ -258,7 +279,10 @@ export class IntegrationsController {
       metadata,
     });
 
-    return ResponseUtil.success({ id, stored: true }, 'Memory stored successfully');
+    return ResponseUtil.success(
+      { id, stored: true },
+      'Memory stored successfully',
+    );
   }
 
   @Delete('pinecone/memory/:id')

@@ -11,7 +11,7 @@ export class DeepSeekService {
   constructor(private logger: LoggerService) {
     this.logger.setContext('DeepSeekService');
     this.apiKey = process.env.DEEPSEEK_API_KEY;
-    
+
     if (!this.apiKey) {
       this.logger.warn('DeepSeek API key not configured');
     }
@@ -48,11 +48,11 @@ export class DeepSeekService {
         },
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
+            Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
           timeout: 30000, // 30 second timeout
-        }
+        },
       );
 
       const { choices, usage } = response.data;
@@ -82,7 +82,6 @@ export class DeepSeekService {
         tokensUsed,
         cost,
       };
-
     } catch (error) {
       this.logger.error(`DeepSeek API call failed`, error.stack, {
         model,
@@ -95,10 +94,14 @@ export class DeepSeekService {
       } else if (error.response?.status === 429) {
         throw new BadRequestException('DeepSeek API rate limit exceeded');
       } else if (error.response?.status === 400) {
-        throw new BadRequestException(`DeepSeek API error: ${error.response.data?.error?.message || 'Bad request'}`);
+        throw new BadRequestException(
+          `DeepSeek API error: ${error.response.data?.error?.message || 'Bad request'}`,
+        );
       }
 
-      throw new BadRequestException(`DeepSeek API call failed: ${error.message}`);
+      throw new BadRequestException(
+        `DeepSeek API call failed: ${error.message}`,
+      );
     }
   }
 
@@ -122,13 +125,14 @@ export class DeepSeekService {
       'deepseek-coder': { input: 0.00014, output: 0.00028 },
     };
 
-    const pricing = pricingMap[this.mapModel(model)] || pricingMap['deepseek-chat'];
-    
+    const pricing =
+      pricingMap[this.mapModel(model)] || pricingMap['deepseek-chat'];
+
     // Simplified cost calculation (assuming 50/50 input/output split)
     const inputTokens = tokensUsed * 0.5;
     const outputTokens = tokensUsed * 0.5;
-    
-    return ((inputTokens * pricing.input) + (outputTokens * pricing.output)) / 1000;
+
+    return (inputTokens * pricing.input + outputTokens * pricing.output) / 1000;
   }
 
   async testConnection(): Promise<boolean> {

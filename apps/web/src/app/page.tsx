@@ -3,7 +3,13 @@
 import { Button } from "@repo/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@repo/ui/card";
 import { Badge } from "@repo/ui/badge";
-import { AIBrainIcon, RobotIcon, FlowIcon, TriggerIcon, AIPulseIcon } from "@repo/ui/icons";
+import {
+  AIBrainIcon,
+  RobotIcon,
+  FlowIcon,
+  TriggerIcon,
+  AIPulseIcon,
+} from "@repo/ui/icons";
 import { ArrowRight, Zap, Brain, Network, Workflow } from "lucide-react";
 
 export default function Home() {
@@ -20,10 +26,16 @@ export default function Home() {
               </span>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" className="text-white hover:text-cyan-400">
+              <Button
+                variant="ghost"
+                className="text-white hover:text-cyan-400"
+              >
                 Features
               </Button>
-              <Button variant="ghost" className="text-white hover:text-cyan-400">
+              <Button
+                variant="ghost"
+                className="text-white hover:text-cyan-400"
+              >
                 Docs
               </Button>
               <Button variant="ai" size="sm">
@@ -42,24 +54,29 @@ export default function Home() {
               🚀 AI-Powered Automation Platform
             </Badge>
           </div>
-          
+
           <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-cyan-200 to-blue-200 bg-clip-text text-transparent">
             Build AI Agents
             <br />
             <span className="text-cyan-400">Without Code</span>
           </h1>
-          
+
           <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto">
-            Create powerful AI agents with drag-and-drop simplicity. Connect Gmail, Slack, Notion, and more. 
-            Automate your workflows with the power of AI.
+            Create powerful AI agents with drag-and-drop simplicity. Connect
+            Gmail, Slack, Notion, and more. Automate your workflows with the
+            power of AI.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button variant="ai" size="xl" className="group">
               Start Building
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button variant="outline" size="xl" className="border-white/20 text-white hover:bg-white/10">
+            <Button
+              variant="outline"
+              size="xl"
+              className="border-white/20 text-white hover:bg-white/10"
+            >
               Watch Demo
             </Button>
           </div>
@@ -95,9 +112,12 @@ export default function Home() {
                 <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center mb-4">
                   <Brain className="h-6 w-6 text-white" />
                 </div>
-                <CardTitle className="text-white">Visual Flow Builder</CardTitle>
+                <CardTitle className="text-white">
+                  Visual Flow Builder
+                </CardTitle>
                 <CardDescription className="text-gray-300">
-                  Drag and drop to create complex AI workflows without writing code
+                  Drag and drop to create complex AI workflows without writing
+                  code
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -109,7 +129,8 @@ export default function Home() {
                 </div>
                 <CardTitle className="text-white">Smart Integrations</CardTitle>
                 <CardDescription className="text-gray-300">
-                  Connect Gmail, Slack, Notion, and 50+ other services seamlessly
+                  Connect Gmail, Slack, Notion, and 50+ other services
+                  seamlessly
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -172,7 +193,8 @@ export default function Home() {
             Ready to Build Your First AI Agent?
           </h2>
           <p className="text-xl text-gray-300 mb-8">
-            Join thousands of developers and businesses automating their workflows with AI
+            Join thousands of developers and businesses automating their
+            workflows with AI
           </p>
           <Button variant="ai" size="xl" className="group">
             Start Building Now

@@ -1,13 +1,31 @@
-import { pgTable, serial, varchar, text, timestamp, integer, boolean, json, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  serial,
+  varchar,
+  text,
+  timestamp,
+  integer,
+  boolean,
+  json,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { agents } from "./agent";
 import { users } from "./user";
 
-export const webhookStatusEnum = pgEnum("webhook_status", ["active", "inactive", "failed"]);
+export const webhookStatusEnum = pgEnum("webhook_status", [
+  "active",
+  "inactive",
+  "failed",
+]);
 
 export const webhooks = pgTable("webhooks", {
   id: serial("id").primaryKey(),
-  agentId: integer("agent_id").references(() => agents.id).notNull(),
-  createdBy: integer("created_by").references(() => users.id).notNull(),
+  agentId: integer("agent_id")
+    .references(() => agents.id)
+    .notNull(),
+  createdBy: integer("created_by")
+    .references(() => users.id)
+    .notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   endpoint: varchar("endpoint", { length: 255 }).notNull().unique(), // e.g., /webhooks/abc123
   secret: text("secret").notNull(), // For webhook validation
@@ -21,7 +39,9 @@ export const webhooks = pgTable("webhooks", {
 
 export const webhookLogs = pgTable("webhook_logs", {
   id: serial("id").primaryKey(),
-  webhookId: integer("webhook_id").references(() => webhooks.id).notNull(),
+  webhookId: integer("webhook_id")
+    .references(() => webhooks.id)
+    .notNull(),
   method: varchar("method", { length: 10 }).notNull(),
   headers: json("headers"),
   body: json("body"),
@@ -37,8 +57,12 @@ export const webhookLogs = pgTable("webhook_logs", {
 
 export const schedules = pgTable("schedules", {
   id: serial("id").primaryKey(),
-  agentId: integer("agent_id").references(() => agents.id).notNull(),
-  createdBy: integer("created_by").references(() => users.id).notNull(),
+  agentId: integer("agent_id")
+    .references(() => agents.id)
+    .notNull(),
+  createdBy: integer("created_by")
+    .references(() => users.id)
+    .notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   cronExpression: varchar("cron_expression", { length: 100 }).notNull(),
   timezone: varchar("timezone", { length: 50 }).default("UTC").notNull(),

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { eq, and, desc } from 'drizzle-orm';
 import * as crypto from 'crypto';
 import { webhooks, webhookLogs, agents } from 'database/src/db/schema';
@@ -31,7 +35,10 @@ export class WebhooksService {
     this.logger.setContext('WebhooksService');
   }
 
-  async createWebhook(createWebhookDto: CreateWebhookDto, userId: number): Promise<any> {
+  async createWebhook(
+    createWebhookDto: CreateWebhookDto,
+    userId: number,
+  ): Promise<any> {
     const { agentId, name, config } = createWebhookDto;
 
     this.logger.log(`Creating webhook for agent: ${agentId}`, {
@@ -92,7 +99,7 @@ export class WebhooksService {
       .where(eq(webhooks.agentId, agentId))
       .orderBy(desc(webhooks.createdAt));
 
-    return webhookList.map(webhook => ({
+    return webhookList.map((webhook) => ({
       id: webhook.id,
       name: webhook.name,
       endpoint: webhook.endpoint,
@@ -143,7 +150,10 @@ export class WebhooksService {
     }
   }
 
-  async triggerWebhook(endpoint: string, triggerData: WebhookTriggerData): Promise<any> {
+  async triggerWebhook(
+    endpoint: string,
+    triggerData: WebhookTriggerData,
+  ): Promise<any> {
     const startTime = Date.now();
     let executionId: number | undefined;
     let success = false;
@@ -226,7 +236,6 @@ export class WebhooksService {
         executionId: execution.id,
         message: 'Webhook triggered successfully',
       };
-
     } catch (err) {
       error = err.message;
       this.logger.error(`Webhook trigger failed: ${endpoint}`, err.stack, {
@@ -237,7 +246,14 @@ export class WebhooksService {
       throw err;
     } finally {
       // Log webhook trigger
-      await this.logWebhookTrigger(endpoint, triggerData, success, executionId, error, Date.now() - startTime);
+      await this.logWebhookTrigger(
+        endpoint,
+        triggerData,
+        success,
+        executionId,
+        error,
+        Date.now() - startTime,
+      );
     }
   }
 
@@ -257,21 +273,19 @@ export class WebhooksService {
         .limit(1);
 
       if (webhook) {
-        await this.databaseService.db
-          .insert(webhookLogs)
-          .values({
-            webhookId: webhook.id,
-            method: triggerData.method,
-            headers: triggerData.headers,
-            body: triggerData.body,
-            query: triggerData.query,
-            ipAddress: triggerData.ipAddress,
-            userAgent: triggerData.userAgent,
-            success,
-            executionId,
-            error,
-            responseTime,
-          });
+        await this.databaseService.db.insert(webhookLogs).values({
+          webhookId: webhook.id,
+          method: triggerData.method,
+          headers: triggerData.headers,
+          body: triggerData.body,
+          query: triggerData.query,
+          ipAddress: triggerData.ipAddress,
+          userAgent: triggerData.userAgent,
+          success,
+          executionId,
+          error,
+          responseTime,
+        });
       }
     } catch (logError) {
       this.logger.error('Failed to log webhook trigger', logError.stack);
@@ -286,7 +300,7 @@ export class WebhooksService {
       .orderBy(desc(webhookLogs.createdAt))
       .limit(limit);
 
-    return logs.map(log => ({
+    return logs.map((log) => ({
       id: log.id,
       method: log.method,
       success: log.success,
@@ -307,7 +321,11 @@ export class WebhooksService {
     return crypto.randomBytes(32).toString('hex');
   }
 
-  private validateSignature(body: any, signature: string, secret: string): boolean {
+  private validateSignature(
+    body: any,
+    signature: string,
+    secret: string,
+  ): boolean {
     const expectedSignature = crypto
       .createHmac('sha256', secret)
       .update(JSON.stringify(body))
@@ -315,7 +333,7 @@ export class WebhooksService {
 
     return crypto.timingSafeEqual(
       Buffer.from(signature),
-      Buffer.from(`sha256=${expectedSignature}`)
+      Buffer.from(`sha256=${expectedSignature}`),
     );
   }
 }

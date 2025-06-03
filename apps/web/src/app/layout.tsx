@@ -19,7 +19,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Clarifaior - No-Code AI Agent Platform",
-  description: "Build, deploy, and manage AI agents with drag-and-drop simplicity",
+  description:
+    "Build, deploy, and manage AI agents with drag-and-drop simplicity",
   keywords: "AI, automation, no-code, agents, workflow",
   authors: [{ name: "Clarifaior Team" }],
   viewport: "width=device-width, initial-scale=1",
@@ -37,30 +38,28 @@ export default function RootLayout({
       >
         <LoadingProvider>
           <QueryProvider>
-            <AuthGuard requireAuth={false}>
-              {children}
-            </AuthGuard>
+            <AuthGuard requireAuth={false}>{children}</AuthGuard>
             <LoadingOverlay />
             <Toaster
               position="top-right"
               toastOptions={{
                 duration: 4000,
                 style: {
-                  background: 'rgba(17, 24, 39, 0.95)',
-                  color: '#fff',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(10px)',
+                  background: "rgba(17, 24, 39, 0.95)",
+                  color: "#fff",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  backdropFilter: "blur(10px)",
                 },
                 success: {
                   iconTheme: {
-                    primary: '#10b981',
-                    secondary: '#fff',
+                    primary: "#10b981",
+                    secondary: "#fff",
                   },
                 },
                 error: {
                   iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#fff',
+                    primary: "#ef4444",
+                    secondary: "#fff",
                   },
                 },
               }}

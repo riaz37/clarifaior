@@ -13,12 +13,17 @@ const spinnerVariants = cva("animate-spin rounded-full border-solid", {
       xl: "h-12 w-12 border-4",
     },
     variant: {
-      default: "border-gray-300 border-t-gray-900 dark:border-gray-600 dark:border-t-gray-100",
-      primary: "border-blue-200 border-t-blue-600 dark:border-blue-800 dark:border-t-blue-400",
+      default:
+        "border-gray-300 border-t-gray-900 dark:border-gray-600 dark:border-t-gray-100",
+      primary:
+        "border-blue-200 border-t-blue-600 dark:border-blue-800 dark:border-t-blue-400",
       ai: "border-cyan-200 border-t-cyan-600 dark:border-cyan-800 dark:border-t-cyan-400",
-      success: "border-green-200 border-t-green-600 dark:border-green-800 dark:border-t-green-400",
-      warning: "border-yellow-200 border-t-yellow-600 dark:border-yellow-800 dark:border-t-yellow-400",
-      destructive: "border-red-200 border-t-red-600 dark:border-red-800 dark:border-t-red-400",
+      success:
+        "border-green-200 border-t-green-600 dark:border-green-800 dark:border-t-green-400",
+      warning:
+        "border-yellow-200 border-t-yellow-600 dark:border-yellow-800 dark:border-t-yellow-400",
+      destructive:
+        "border-red-200 border-t-red-600 dark:border-red-800 dark:border-t-red-400",
     },
   },
   defaultVariants: {
@@ -50,7 +55,7 @@ const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 Spinner.displayName = "Spinner";
 
@@ -60,7 +65,13 @@ export interface LoadingOverlayProps {
   children: React.ReactNode;
   className?: string;
   spinnerSize?: "sm" | "default" | "lg" | "xl";
-  spinnerVariant?: "default" | "primary" | "ai" | "success" | "warning" | "destructive";
+  spinnerVariant?:
+    | "default"
+    | "primary"
+    | "ai"
+    | "success"
+    | "warning"
+    | "destructive";
   label?: string;
 }
 
@@ -78,7 +89,11 @@ const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
       {isLoading && (
         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50 dark:bg-gray-900/80">
           <div className="flex flex-col items-center space-y-2">
-            <Spinner size={spinnerSize} variant={spinnerVariant} label={label} />
+            <Spinner
+              size={spinnerSize}
+              variant={spinnerVariant}
+              label={label}
+            />
             <p className="text-sm text-gray-600 dark:text-gray-400">{label}</p>
           </div>
         </div>

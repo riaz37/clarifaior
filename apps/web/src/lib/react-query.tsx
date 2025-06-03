@@ -1,41 +1,51 @@
 "use client";
 
-import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { useState } from 'react';
-import { 
-  AgentService, 
-  ExecutionService, 
-  IntegrationService, 
-  TriggerService, 
-  UserService 
-} from './api-services';
-import { ErrorHandler } from './error-handler';
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useState } from "react";
+import {
+  AgentService,
+  ExecutionService,
+  IntegrationService,
+  TriggerService,
+  UserService,
+} from "./api-services";
+import { ErrorHandler } from "./error-handler";
 
 // Create a client
-const createQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-      retry: (failureCount, error: any) => {
-        // Don't retry on auth errors
-        if (error?.response?.status === 401 || error?.response?.status === 403) {
-          return false;
-        }
-        // Retry up to 3 times for other errors
-        return failureCount < 3;
+const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+        retry: (failureCount, error: any) => {
+          // Don't retry on auth errors
+          if (
+            error?.response?.status === 401 ||
+            error?.response?.status === 403
+          ) {
+            return false;
+          }
+          // Retry up to 3 times for other errors
+          return failureCount < 3;
+        },
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    },
-    mutations: {
-      retry: false, // Don't retry mutations by default
-      onError: (error: any) => {
-        ErrorHandler.log(ErrorHandler.fromApiError(error));
+      mutations: {
+        retry: false, // Don't retry mutations by default
+        onError: (error: any) => {
+          ErrorHandler.log(ErrorHandler.fromApiError(error));
+        },
       },
     },
-  },
-});
+  });
 
 // Query client provider component
 export function QueryProvider({ children }: { children: React.ReactNode }) {
@@ -44,7 +54,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {process.env.NODE_ENV === 'development' && (
+      {process.env.NODE_ENV === "development" && (
         <ReactQueryDevtools initialIsOpen={false} />
       )}
     </QueryClientProvider>
@@ -54,28 +64,28 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 // Query keys for consistent caching
 export const queryKeys = {
   // Agents
-  agents: ['agents'] as const,
-  agent: (id: string) => ['agents', id] as const,
-  agentStats: (id: string) => ['agents', id, 'stats'] as const,
-  
+  agents: ["agents"] as const,
+  agent: (id: string) => ["agents", id] as const,
+  agentStats: (id: string) => ["agents", id, "stats"] as const,
+
   // Executions
-  executions: ['executions'] as const,
-  execution: (id: string) => ['executions', id] as const,
-  executionLogs: (id: string) => ['executions', id, 'logs'] as const,
-  executionMetrics: ['executions', 'metrics'] as const,
-  
+  executions: ["executions"] as const,
+  execution: (id: string) => ["executions", id] as const,
+  executionLogs: (id: string) => ["executions", id, "logs"] as const,
+  executionMetrics: ["executions", "metrics"] as const,
+
   // Integrations
-  integrations: ['integrations'] as const,
-  integration: (id: string) => ['integrations', id] as const,
-  
+  integrations: ["integrations"] as const,
+  integration: (id: string) => ["integrations", id] as const,
+
   // Triggers
-  triggers: ['triggers'] as const,
-  trigger: (id: string) => ['triggers', id] as const,
-  
+  triggers: ["triggers"] as const,
+  trigger: (id: string) => ["triggers", id] as const,
+
   // User
-  user: ['user'] as const,
-  userProfile: ['user', 'profile'] as const,
-  userWorkspaces: ['user', 'workspaces'] as const,
+  user: ["user"] as const,
+  userProfile: ["user", "profile"] as const,
+  userWorkspaces: ["user", "workspaces"] as const,
 };
 
 // Agent hooks
@@ -106,7 +116,7 @@ export const useAgentStats = (id: string) => {
 
 export const useCreateAgent = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: AgentService.createAgent,
     onSuccess: () => {
@@ -117,9 +127,9 @@ export const useCreateAgent = () => {
 
 export const useUpdateAgent = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => 
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
       AgentService.updateAgent(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.agent(id) });
@@ -130,7 +140,7 @@ export const useUpdateAgent = () => {
 
 export const useDeleteAgent = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: AgentService.deleteAgent,
     onSuccess: () => {
@@ -141,9 +151,9 @@ export const useDeleteAgent = () => {
 
 export const useExecuteAgent = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, triggerData }: { id: string; triggerData?: any }) => 
+    mutationFn: ({ id, triggerData }: { id: string; triggerData?: any }) =>
       AgentService.executeAgent(id, triggerData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.executions });
@@ -159,7 +169,9 @@ export const useExecutions = (params?: any) => {
     staleTime: 30 * 1000, // 30 seconds
     refetchInterval: (data) => {
       // Auto-refresh if there are running executions
-      const hasRunning = data?.executions?.some((e: any) => e.status === 'running');
+      const hasRunning = data?.executions?.some(
+        (e: any) => e.status === "running",
+      );
       return hasRunning ? 5000 : false; // 5 seconds
     },
   });
@@ -172,7 +184,7 @@ export const useExecution = (id: string) => {
     enabled: !!id,
     refetchInterval: (data) => {
       // Auto-refresh if execution is running
-      return data?.status === 'running' ? 2000 : false; // 2 seconds
+      return data?.status === "running" ? 2000 : false; // 2 seconds
     },
   });
 };
@@ -195,7 +207,7 @@ export const useExecutionMetrics = (params?: any) => {
 
 export const useCancelExecution = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ExecutionService.cancelExecution,
     onSuccess: (_, id) => {
@@ -207,7 +219,7 @@ export const useCancelExecution = () => {
 
 export const useRetryExecution = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ExecutionService.retryExecution,
     onSuccess: () => {
@@ -235,9 +247,9 @@ export const useIntegration = (id: string) => {
 
 export const useConnectIntegration = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ type, config }: { type: string; config: any }) => 
+    mutationFn: ({ type, config }: { type: string; config: any }) =>
       IntegrationService.connectIntegration(type, config),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.integrations });
@@ -247,7 +259,7 @@ export const useConnectIntegration = () => {
 
 export const useDisconnectIntegration = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: IntegrationService.disconnectIntegration,
     onSuccess: () => {
@@ -281,7 +293,7 @@ export const useTrigger = (id: string) => {
 
 export const useCreateTrigger = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: TriggerService.createTrigger,
     onSuccess: () => {
@@ -292,9 +304,9 @@ export const useCreateTrigger = () => {
 
 export const useUpdateTrigger = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => 
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
       TriggerService.updateTrigger(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.trigger(id) });
@@ -305,7 +317,7 @@ export const useUpdateTrigger = () => {
 
 export const useDeleteTrigger = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: TriggerService.deleteTrigger,
     onSuccess: () => {
@@ -316,9 +328,9 @@ export const useDeleteTrigger = () => {
 
 export const useToggleTrigger = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => 
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       TriggerService.toggleTrigger(id, isActive),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.trigger(id) });
@@ -346,7 +358,7 @@ export const useUserWorkspaces = () => {
 
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: UserService.updateProfile,
     onSuccess: () => {
@@ -357,7 +369,7 @@ export const useUpdateProfile = () => {
 
 export const useCreateWorkspace = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: UserService.createWorkspace,
     onSuccess: () => {

@@ -23,7 +23,7 @@ export class PineconeService {
   constructor(private logger: LoggerService) {
     this.logger.setContext('PineconeService');
     this.indexName = process.env.PINECONE_INDEX_NAME || 'clarifaior-memory';
-    
+
     const apiKey = process.env.PINECONE_API_KEY;
     if (!apiKey) {
       this.logger.warn('Pinecone API key not configured');
@@ -70,14 +70,15 @@ export class PineconeService {
       });
 
       // Filter by threshold and format results
-      const results = searchResponse.matches
-        ?.filter(match => match.score >= threshold)
-        .map(match => ({
-          id: match.id,
-          score: match.score,
-          content: match.metadata?.content || '',
-          metadata: match.metadata || {},
-        })) || [];
+      const results =
+        searchResponse.matches
+          ?.filter((match) => match.score >= threshold)
+          .map((match) => ({
+            id: match.id,
+            score: match.score,
+            content: match.metadata?.content || '',
+            metadata: match.metadata || {},
+          })) || [];
 
       this.logger.log(`Pinecone search completed`, {
         query: query.substring(0, 50),
@@ -86,7 +87,6 @@ export class PineconeService {
       });
 
       return results;
-
     } catch (error) {
       this.logger.error(`Pinecone search failed`, error.stack, {
         query: query.substring(0, 50),
@@ -113,7 +113,8 @@ export class PineconeService {
       const index = this.pinecone.index(this.indexName);
 
       // Generate embedding if not provided
-      const embedding = document.embedding || await this.generateEmbedding(document.content);
+      const embedding =
+        document.embedding || (await this.generateEmbedding(document.content));
 
       // Upsert the vector
       await index.upsert([
@@ -132,7 +133,6 @@ export class PineconeService {
         id: document.id,
         indexName: this.indexName,
       });
-
     } catch (error) {
       this.logger.error(`Failed to store document`, error.stack, {
         id: document.id,
@@ -153,14 +153,15 @@ export class PineconeService {
       await index.deleteOne(id);
 
       this.logger.log(`Document deleted`, { id, indexName: this.indexName });
-
     } catch (error) {
       this.logger.error(`Failed to delete document`, error.stack, {
         id,
         error: error.message,
       });
 
-      throw new BadRequestException(`Failed to delete memory: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to delete memory: ${error.message}`,
+      );
     }
   }
 
@@ -180,10 +181,11 @@ export class PineconeService {
         totalVectorCount: stats.totalVectorCount,
         namespaces: stats.namespaces,
       };
-
     } catch (error) {
       this.logger.error(`Failed to get index stats`, error.stack);
-      throw new BadRequestException(`Failed to get index stats: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to get index stats: ${error.message}`,
+      );
     }
   }
 
@@ -195,13 +197,15 @@ export class PineconeService {
     try {
       // Try to list indexes to test connection
       const indexes = await this.pinecone.listIndexes();
-      
+
       // Check if our index exists
-      const indexExists = indexes.indexes?.some(index => index.name === this.indexName);
-      
+      const indexExists = indexes.indexes?.some(
+        (index) => index.name === this.indexName,
+      );
+
       if (!indexExists) {
         this.logger.warn(`Index '${this.indexName}' not found`, {
-          availableIndexes: indexes.indexes?.map(i => i.name),
+          availableIndexes: indexes.indexes?.map((i) => i.name),
         });
         return false;
       }
@@ -212,7 +216,6 @@ export class PineconeService {
       });
 
       return true;
-
     } catch (error) {
       this.logger.error('Pinecone connection test failed', error.stack);
       return false;
@@ -240,7 +243,6 @@ export class PineconeService {
       });
 
       this.logger.log(`Index created successfully: ${this.indexName}`);
-
     } catch (error) {
       this.logger.error(`Failed to create index`, error.stack);
       throw new BadRequestException(`Failed to create index: ${error.message}`);
@@ -250,7 +252,7 @@ export class PineconeService {
   private async generateEmbedding(text: string): Promise<number[]> {
     // For now, use OpenAI embeddings (most common)
     // In production, you might want to use different embedding models
-    
+
     const openaiApiKey = process.env.OPENAI_API_KEY;
     if (!openaiApiKey) {
       throw new BadRequestException('OpenAI API key required for embeddings');
@@ -260,7 +262,7 @@ export class PineconeService {
       const response = await fetch('https://api.openai.com/v1/embeddings', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
+          Authorization: `Bearer ${openaiApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -275,10 +277,11 @@ export class PineconeService {
 
       const data = await response.json();
       return data.data[0].embedding;
-
     } catch (error) {
       this.logger.error('Failed to generate embedding', error.stack);
-      throw new BadRequestException(`Failed to generate embedding: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to generate embedding: ${error.message}`,
+      );
     }
   }
 }

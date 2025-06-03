@@ -1,5 +1,5 @@
 // Export database connection
-export { default as db } from './db';
+export { default as db } from "./db";
 
 // Export all schema tables and types
-export * from './db/schema';
+export * from "./db/schema";

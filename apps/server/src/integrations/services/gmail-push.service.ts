@@ -38,21 +38,30 @@ export class GmailPushService {
     private executionService: ExecutionService,
   ) {
     this.logger.setContext('GmailPushService');
-    
+
     const projectId = process.env.GOOGLE_CLOUD_PROJECT;
     this.topicName = process.env.GMAIL_PUBSUB_TOPIC || 'gmail-notifications';
-    this.subscriptionName = process.env.GMAIL_PUBSUB_SUBSCRIPTION || 'gmail-notifications-sub';
+    this.subscriptionName =
+      process.env.GMAIL_PUBSUB_SUBSCRIPTION || 'gmail-notifications-sub';
 
     if (projectId) {
       this.pubsub = new PubSub({ projectId });
       this.initializePubSub();
     } else {
-      this.logger.warn('Google Cloud Project ID not configured - Gmail push notifications disabled');
+      this.logger.warn(
+        'Google Cloud Project ID not configured - Gmail push notifications disabled',
+      );
     }
   }
 
   async setupGmailWatch(request: GmailWatchRequest): Promise<any> {
-    const { userId, workspaceId, agentId, labelIds = ['INBOX'], query } = request;
+    const {
+      userId,
+      workspaceId,
+      agentId,
+      labelIds = ['INBOX'],
+      query,
+    } = request;
 
     this.logger.log(`Setting up Gmail watch for user: ${userId}`, {
       userId,
@@ -64,8 +73,11 @@ export class GmailPushService {
 
     try {
       // Get valid OAuth token
-      const token = await this.oauthService.getValidGoogleToken(userId, workspaceId);
-      
+      const token = await this.oauthService.getValidGoogleToken(
+        userId,
+        workspaceId,
+      );
+
       // Create Gmail client
       const oauth2Client = new google.auth.OAuth2();
       oauth2Client.setCredentials({ access_token: token.accessToken });
@@ -138,16 +150,21 @@ export class GmailPushService {
         expiration: new Date(parseInt(expiration)).toISOString(),
         topicName: this.topicName,
       };
-
     } catch (error) {
       this.logger.error('Failed to setup Gmail watch', error.stack);
-      throw new BadRequestException(`Failed to setup Gmail watch: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to setup Gmail watch: ${error.message}`,
+      );
     }
   }
 
-  async handlePushNotification(notification: GmailPushNotification): Promise<void> {
+  async handlePushNotification(
+    notification: GmailPushNotification,
+  ): Promise<void> {
     try {
-      const data = JSON.parse(Buffer.from(notification.message.data, 'base64').toString());
+      const data = JSON.parse(
+        Buffer.from(notification.message.data, 'base64').toString(),
+      );
       const { emailAddress, historyId } = data;
 
       this.logger.log(`Received Gmail push notification`, {
@@ -163,8 +180,8 @@ export class GmailPushService {
         .where(
           and(
             eq(gmailWatches.emailAddress, emailAddress),
-            eq(gmailWatches.isActive, true)
-          )
+            eq(gmailWatches.isActive, true),
+          ),
         )
         .limit(1);
 
@@ -174,7 +191,10 @@ export class GmailPushService {
       }
 
       // Check if we've already processed this history
-      if (watch.lastProcessedHistoryId && historyId <= watch.lastProcessedHistoryId) {
+      if (
+        watch.lastProcessedHistoryId &&
+        historyId <= watch.lastProcessedHistoryId
+      ) {
         this.logger.debug(`History already processed: ${historyId}`);
         return;
       }
@@ -200,17 +220,22 @@ export class GmailPushService {
           updatedAt: new Date(),
         })
         .where(eq(gmailWatches.id, watch.id));
-
     } catch (error) {
-      this.logger.error('Failed to handle Gmail push notification', error.stack);
+      this.logger.error(
+        'Failed to handle Gmail push notification',
+        error.stack,
+      );
     }
   }
 
   async stopGmailWatch(userId: number, workspaceId: number): Promise<void> {
     try {
       // Get OAuth token
-      const token = await this.oauthService.getValidGoogleToken(userId, workspaceId);
-      
+      const token = await this.oauthService.getValidGoogleToken(
+        userId,
+        workspaceId,
+      );
+
       // Create Gmail client
       const oauth2Client = new google.auth.OAuth2();
       oauth2Client.setCredentials({ access_token: token.accessToken });
@@ -229,23 +254,30 @@ export class GmailPushService {
         .where(
           and(
             eq(gmailWatches.userId, userId),
-            eq(gmailWatches.workspaceId, workspaceId)
-          )
+            eq(gmailWatches.workspaceId, workspaceId),
+          ),
         );
 
       this.logger.log(`Gmail watch stopped for user: ${userId}`);
-
     } catch (error) {
       this.logger.error('Failed to stop Gmail watch', error.stack);
-      throw new BadRequestException(`Failed to stop Gmail watch: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to stop Gmail watch: ${error.message}`,
+      );
     }
   }
 
-  private async getNewMessages(watch: any, currentHistoryId: string): Promise<any[]> {
+  private async getNewMessages(
+    watch: any,
+    currentHistoryId: string,
+  ): Promise<any[]> {
     try {
       // Get OAuth token
-      const token = await this.oauthService.getValidGoogleToken(watch.userId, watch.workspaceId);
-      
+      const token = await this.oauthService.getValidGoogleToken(
+        watch.userId,
+        watch.workspaceId,
+      );
+
       // Create Gmail client
       const oauth2Client = new google.auth.OAuth2();
       oauth2Client.setCredentials({ access_token: token.accessToken });
@@ -275,9 +307,12 @@ export class GmailPushService {
               });
 
               const message = messageResponse.data;
-              
+
               // Apply query filter if specified
-              if (watch.query && !this.messageMatchesQuery(message, watch.query)) {
+              if (
+                watch.query &&
+                !this.messageMatchesQuery(message, watch.query)
+              ) {
                 continue;
               }
 
@@ -288,7 +323,6 @@ export class GmailPushService {
       }
 
       return newMessages;
-
     } catch (error) {
       this.logger.error('Failed to get new messages', error.stack);
       return [];
@@ -299,7 +333,8 @@ export class GmailPushService {
     try {
       // Parse message data
       const headers = message.payload?.headers || [];
-      const getHeader = (name: string) => headers.find((h: any) => h.name === name)?.value;
+      const getHeader = (name: string) =>
+        headers.find((h: any) => h.name === name)?.value;
 
       const emailData = {
         id: message.id,
@@ -349,8 +384,8 @@ export class GmailPushService {
           .where(
             and(
               eq(agents.workspaceId, watch.workspaceId),
-              eq(agents.status, 'active')
-            )
+              eq(agents.status, 'active'),
+            ),
           );
 
         // Trigger agents that have Gmail trigger nodes
@@ -379,7 +414,6 @@ export class GmailPushService {
           }
         }
       }
-
     } catch (error) {
       this.logger.error('Failed to process new message', error.stack);
     }
@@ -387,22 +421,29 @@ export class GmailPushService {
 
   private messageMatchesQuery(message: any, query: string): boolean {
     // Simple query matching - in production, use Gmail's search syntax
-    const searchText = `${message.snippet} ${message.payload?.headers?.map((h: any) => h.value).join(' ')}`.toLowerCase();
+    const searchText =
+      `${message.snippet} ${message.payload?.headers?.map((h: any) => h.value).join(' ')}`.toLowerCase();
     return searchText.includes(query.toLowerCase());
   }
 
   private agentHasGmailTrigger(flowDefinition: any): boolean {
     if (!flowDefinition?.nodes) return false;
-    return flowDefinition.nodes.some((node: any) => node.type === 'trigger_gmail');
+    return flowDefinition.nodes.some(
+      (node: any) => node.type === 'trigger_gmail',
+    );
   }
 
   private async initializePubSub(): Promise<void> {
     try {
       // Create topic if it doesn't exist
-      const [topic] = await this.pubsub.topic(this.topicName).get({ autoCreate: true });
-      
+      const [topic] = await this.pubsub
+        .topic(this.topicName)
+        .get({ autoCreate: true });
+
       // Create subscription if it doesn't exist
-      const [subscription] = await topic.subscription(this.subscriptionName).get({ autoCreate: true });
+      const [subscription] = await topic
+        .subscription(this.subscriptionName)
+        .get({ autoCreate: true });
 
       // Set up message handler
       subscription.on('message', (message) => {
@@ -428,7 +469,6 @@ export class GmailPushService {
         topic: this.topicName,
         subscription: this.subscriptionName,
       });
-
     } catch (error) {
       this.logger.error('Failed to initialize Pub/Sub', error.stack);
     }

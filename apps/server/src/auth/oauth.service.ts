@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import { google } from 'googleapis';
 import { oauthTokens, integrationConnections } from 'database/src/db/schema';
@@ -30,9 +34,13 @@ export class OAuthService {
     this.logger.setContext('OAuthService');
   }
 
-  async getGoogleAuthUrl(userId: number, workspaceId: number, state?: string): Promise<string> {
+  async getGoogleAuthUrl(
+    userId: number,
+    workspaceId: number,
+    state?: string,
+  ): Promise<string> {
     const oauth2Client = this.createGoogleOAuthClient();
-    
+
     const scopes = [
       'https://www.googleapis.com/auth/gmail.readonly',
       'https://www.googleapis.com/auth/gmail.send',
@@ -45,7 +53,12 @@ export class OAuthService {
       access_type: 'offline',
       scope: scopes,
       prompt: 'consent', // Force consent to get refresh token
-      state: JSON.stringify({ userId, workspaceId, provider: 'google', ...(state && { state }) }),
+      state: JSON.stringify({
+        userId,
+        workspaceId,
+        provider: 'google',
+        ...(state && { state }),
+      }),
     });
 
     this.logger.log(`Generated Google OAuth URL for user: ${userId}`);
@@ -70,8 +83,10 @@ export class OAuthService {
       const userInfo = await oauth2.userinfo.get();
 
       // Store encrypted tokens
-      const encryptedAccessToken = this.encryptionService.encrypt(tokens.access_token);
-      const encryptedRefreshToken = tokens.refresh_token 
+      const encryptedAccessToken = this.encryptionService.encrypt(
+        tokens.access_token,
+      );
+      const encryptedRefreshToken = tokens.refresh_token
         ? this.encryptionService.encrypt(tokens.refresh_token)
         : null;
 
@@ -94,7 +109,11 @@ export class OAuthService {
           },
         })
         .onConflictDoUpdate({
-          target: [oauthTokens.userId, oauthTokens.workspaceId, oauthTokens.provider],
+          target: [
+            oauthTokens.userId,
+            oauthTokens.workspaceId,
+            oauthTokens.provider,
+          ],
           set: {
             accessToken: encryptedAccessToken,
             refreshToken: encryptedRefreshToken,
@@ -119,7 +138,11 @@ export class OAuthService {
           },
         })
         .onConflictDoUpdate({
-          target: [integrationConnections.userId, integrationConnections.workspaceId, integrationConnections.provider],
+          target: [
+            integrationConnections.userId,
+            integrationConnections.workspaceId,
+            integrationConnections.provider,
+          ],
           set: {
             connectionName: `Gmail - ${userInfo.data.email}`,
             isActive: true,
@@ -139,14 +162,16 @@ export class OAuthService {
         name: userInfo.data.name,
         hasRefreshToken: !!tokens.refresh_token,
       };
-
     } catch (error) {
       this.logger.error('Google OAuth callback failed', error.stack);
       throw new BadRequestException(`OAuth callback failed: ${error.message}`);
     }
   }
 
-  async getValidGoogleToken(userId: number, workspaceId: number): Promise<OAuthToken> {
+  async getValidGoogleToken(
+    userId: number,
+    workspaceId: number,
+  ): Promise<OAuthToken> {
     const [tokenRecord] = await this.databaseService.db
       .select()
       .from(oauthTokens)
@@ -155,17 +180,19 @@ export class OAuthService {
           eq(oauthTokens.userId, userId),
           eq(oauthTokens.workspaceId, workspaceId),
           eq(oauthTokens.provider, 'google'),
-          eq(oauthTokens.isActive, true)
-        )
+          eq(oauthTokens.isActive, true),
+        ),
       )
       .limit(1);
 
     if (!tokenRecord) {
-      throw new NotFoundException('No Google OAuth token found. Please reconnect your Google account.');
+      throw new NotFoundException(
+        'No Google OAuth token found. Please reconnect your Google account.',
+      );
     }
 
     const accessToken = this.encryptionService.decrypt(tokenRecord.accessToken);
-    const refreshToken = tokenRecord.refreshToken 
+    const refreshToken = tokenRecord.refreshToken
       ? this.encryptionService.decrypt(tokenRecord.refreshToken)
       : null;
 
@@ -177,7 +204,9 @@ export class OAuthService {
       // Refresh the token
       return this.refreshGoogleToken(userId, workspaceId, refreshToken);
     } else if (isExpired && !refreshToken) {
-      throw new BadRequestException('Google token expired and no refresh token available. Please reconnect your Google account.');
+      throw new BadRequestException(
+        'Google token expired and no refresh token available. Please reconnect your Google account.',
+      );
     }
 
     return {
@@ -189,7 +218,11 @@ export class OAuthService {
     };
   }
 
-  async refreshGoogleToken(userId: number, workspaceId: number, refreshToken: string): Promise<OAuthToken> {
+  async refreshGoogleToken(
+    userId: number,
+    workspaceId: number,
+    refreshToken: string,
+  ): Promise<OAuthToken> {
     try {
       const oauth2Client = this.createGoogleOAuthClient();
       oauth2Client.setCredentials({ refresh_token: refreshToken });
@@ -201,8 +234,10 @@ export class OAuthService {
       }
 
       // Update stored token
-      const encryptedAccessToken = this.encryptionService.encrypt(credentials.access_token);
-      const encryptedRefreshToken = credentials.refresh_token 
+      const encryptedAccessToken = this.encryptionService.encrypt(
+        credentials.access_token,
+      );
+      const encryptedRefreshToken = credentials.refresh_token
         ? this.encryptionService.encrypt(credentials.refresh_token)
         : null;
 
@@ -211,15 +246,17 @@ export class OAuthService {
         .set({
           accessToken: encryptedAccessToken,
           ...(encryptedRefreshToken && { refreshToken: encryptedRefreshToken }),
-          expiresAt: credentials.expiry_date ? new Date(credentials.expiry_date) : null,
+          expiresAt: credentials.expiry_date
+            ? new Date(credentials.expiry_date)
+            : null,
           updatedAt: new Date(),
         })
         .where(
           and(
             eq(oauthTokens.userId, userId),
             eq(oauthTokens.workspaceId, workspaceId),
-            eq(oauthTokens.provider, 'google')
-          )
+            eq(oauthTokens.provider, 'google'),
+          ),
         );
 
       this.logger.log(`Google token refreshed for user: ${userId}`);
@@ -227,21 +264,24 @@ export class OAuthService {
       return {
         accessToken: credentials.access_token,
         refreshToken: credentials.refresh_token || refreshToken,
-        expiresAt: credentials.expiry_date ? new Date(credentials.expiry_date) : null,
+        expiresAt: credentials.expiry_date
+          ? new Date(credentials.expiry_date)
+          : null,
         scope: credentials.scope,
         tokenType: 'Bearer',
       };
-
     } catch (error) {
       this.logger.error('Failed to refresh Google token', error.stack);
-      throw new BadRequestException(`Failed to refresh token: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to refresh token: ${error.message}`,
+      );
     }
   }
 
   async revokeGoogleToken(userId: number, workspaceId: number): Promise<void> {
     try {
       const tokenRecord = await this.getValidGoogleToken(userId, workspaceId);
-      
+
       // Revoke token with Google
       const oauth2Client = this.createGoogleOAuthClient();
       await oauth2Client.revokeToken(tokenRecord.accessToken);
@@ -257,8 +297,8 @@ export class OAuthService {
           and(
             eq(oauthTokens.userId, userId),
             eq(oauthTokens.workspaceId, workspaceId),
-            eq(oauthTokens.provider, 'google')
-          )
+            eq(oauthTokens.provider, 'google'),
+          ),
         );
 
       // Deactivate integration connection
@@ -272,19 +312,21 @@ export class OAuthService {
           and(
             eq(integrationConnections.userId, userId),
             eq(integrationConnections.workspaceId, workspaceId),
-            eq(integrationConnections.provider, 'google')
-          )
+            eq(integrationConnections.provider, 'google'),
+          ),
         );
 
       this.logger.log(`Google token revoked for user: ${userId}`);
-
     } catch (error) {
       this.logger.error('Failed to revoke Google token', error.stack);
       throw new BadRequestException(`Failed to revoke token: ${error.message}`);
     }
   }
 
-  async getUserConnections(userId: number, workspaceId: number): Promise<any[]> {
+  async getUserConnections(
+    userId: number,
+    workspaceId: number,
+  ): Promise<any[]> {
     const connections = await this.databaseService.db
       .select()
       .from(integrationConnections)
@@ -292,11 +334,11 @@ export class OAuthService {
         and(
           eq(integrationConnections.userId, userId),
           eq(integrationConnections.workspaceId, workspaceId),
-          eq(integrationConnections.isActive, true)
-        )
+          eq(integrationConnections.isActive, true),
+        ),
       );
 
-    return connections.map(conn => ({
+    return connections.map((conn) => ({
       id: conn.id,
       provider: conn.provider,
       connectionName: conn.connectionName,
@@ -309,7 +351,9 @@ export class OAuthService {
   private createGoogleOAuthClient() {
     const clientId = process.env.GMAIL_CLIENT_ID;
     const clientSecret = process.env.GMAIL_CLIENT_SECRET;
-    const redirectUri = process.env.GMAIL_REDIRECT_URI || `${process.env.WEBHOOK_BASE_URL}/auth/google/callback`;
+    const redirectUri =
+      process.env.GMAIL_REDIRECT_URI ||
+      `${process.env.WEBHOOK_BASE_URL}/auth/google/callback`;
 
     if (!clientId || !clientSecret) {
       throw new BadRequestException('Google OAuth not configured');

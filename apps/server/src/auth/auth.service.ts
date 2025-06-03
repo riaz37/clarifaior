@@ -6,11 +6,18 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { eq } from 'drizzle-orm';
-import { users, workspaces, workspaceMembers } from 'database/src/db/schema';
+import * as crypto from 'crypto';
+import { eq, and, or, isNull } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
+import {
+  users,
+  workspaces,
+  workspaceMembers,
+  refreshTokens,
+} from 'database/src/db/schema';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { AuthResponse, JwtPayload } from '@repo/types';
+import { AuthResponse, JwtPayload, RefreshTokenResponse } from '@repo/types';
 import { DatabaseService } from '../common/services/database.service';
 import { ValidationService } from '../common/services/validation.service';
 import { LoggerService } from '../common/services/logger.service';
@@ -117,9 +124,12 @@ export class AuthService {
     };
 
     const access_token = this.jwtService.sign(payload);
+    const refreshToken = await this.generateRefreshToken(user.id);
 
     return {
       access_token,
+      refresh_token: refreshToken.token,
+      expires_in: process.env.JWT_EXPIRES_IN || '7d',
       user: {
         id: user.id,
         name: user.name,
@@ -167,5 +177,91 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    // Find the token in the database
+    const now = new Date();
+    const [token] = await this.databaseService.db
+      .select()
+      .from(refreshTokens)
+      .where(
+        and(
+          eq(refreshTokens.token, refreshToken),
+          eq(refreshTokens.revoked, false),
+          or(
+            isNull(refreshTokens.expiresAt),
+            // Using Drizzle's SQL expression for date comparison
+            sql`${refreshTokens.expiresAt} > ${now.toISOString()}`,
+          ),
+        ),
+      )
+      .limit(1);
+
+    if (!token) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    // Get the user
+    const user = await this.validateUserById(token.userId);
+
+    // Generate new access token
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+    };
+
+    const access_token = this.jwtService.sign(payload);
+
+    // Optionally, you can revoke the old refresh token and issue a new one
+    // await this.revokeRefreshToken(refreshToken);
+    // const newRefreshToken = await this.generateRefreshToken(user.id);
+
+    return {
+      access_token,
+      // refresh_token: newRefreshToken.token,
+      expires_in: process.env.JWT_EXPIRES_IN || '7d',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        isEmailVerified: user.isEmailVerified,
+      },
+    };
+  }
+
+  private async generateRefreshToken(userId: number) {
+    // Generate a random token
+    const token = crypto.randomBytes(40).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days expiration
+
+    // Store the token in the database
+    const [refreshToken] = await this.databaseService.db
+      .insert(refreshTokens)
+      .values({
+        token,
+        userId,
+        expiresAt,
+      })
+      .returning();
+
+    return refreshToken;
+  }
+
+  async revokeRefreshToken(token: string): Promise<void> {
+    await this.databaseService.db
+      .update(refreshTokens)
+      .set({ revoked: true })
+      .where(eq(refreshTokens.token, token));
+  }
+
+  async revokeAllUserRefreshTokens(userId: number): Promise<void> {
+    await this.databaseService.db
+      .update(refreshTokens)
+      .set({ revoked: true })
+      .where(eq(refreshTokens.userId, userId));
   }
 }

@@ -28,14 +28,13 @@ const badgeVariants = cva(
           "border-transparent bg-blue-500 text-white hover:bg-blue-500/80 animate-pulse",
         completed:
           "border-transparent bg-green-500 text-white hover:bg-green-500/80",
-        failed:
-          "border-transparent bg-red-500 text-white hover:bg-red-500/80",
+        failed: "border-transparent bg-red-500 text-white hover:bg-red-500/80",
       },
     },
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 export interface BadgeProps

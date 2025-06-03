@@ -32,10 +32,7 @@ export class ExampleController {
    */
   @Get('users')
   @RequirePermissions(Permission.WORKSPACE_READ)
-  async getUsers(
-    @CurrentUser() user: any,
-    @CurrentWorkspace() workspace: any,
-  ) {
+  async getUsers(@CurrentUser() user: any, @CurrentWorkspace() workspace: any) {
     this.logger.log(`Fetching users for workspace ${workspace.id}`, {
       userId: user.id,
       workspaceId: workspace.id,
@@ -43,7 +40,7 @@ export class ExampleController {
 
     // Example pagination query
     const paginationOptions = { page: 1, limit: 10 };
-    
+
     // This would be a real query in practice
     const mockData = [
       { id: 1, name: 'John Doe', email: 'john@example.com' },
@@ -115,12 +112,11 @@ export class ExampleController {
       // Simulate some operation that might fail
       throw new Error('Something went wrong');
     } catch (error) {
-      this.logger.error(
-        'Example error occurred',
-        error.stack,
-        { userId: user.id, operation: 'error-example' },
-      );
-      
+      this.logger.error('Example error occurred', error.stack, {
+        userId: user.id,
+        operation: 'error-example',
+      });
+
       return ResponseUtil.error('Operation failed', error.message);
     }
   }

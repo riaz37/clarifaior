@@ -1,11 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
   emailValidation,
   passwordValidation,
   nameValidation,
   workspaceNameValidation,
   termsValidation,
-} from './validation-utils';
+} from "./validation-utils";
 
 export const loginSchema = z.object({
   email: emailValidation,
@@ -19,13 +19,15 @@ export const registerSchema = z
     name: nameValidation,
     email: emailValidation,
     password: passwordValidation,
-    confirmPassword: z.string().min(1, { message: 'Please confirm your password' }),
+    confirmPassword: z
+      .string()
+      .min(1, { message: "Please confirm your password" }),
     workspaceName: workspaceNameValidation,
     agreeToTerms: termsValidation,
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
-    path: ['confirmPassword'],
+    path: ["confirmPassword"],
   });
 
 export type RegisterForm = z.infer<typeof registerSchema>;

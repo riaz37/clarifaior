@@ -125,7 +125,10 @@ export class WebhooksController {
       ipAddress: triggerData.ipAddress,
     });
 
-    const result = await this.webhooksService.triggerWebhook(endpoint, triggerData);
+    const result = await this.webhooksService.triggerWebhook(
+      endpoint,
+      triggerData,
+    );
     return result;
   }
 
@@ -139,7 +142,7 @@ export class WebhooksController {
     @Req() req: Request,
   ) {
     const webhook = await this.webhooksService.getWebhook(+webhookId);
-    
+
     const triggerData = {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -154,7 +157,10 @@ export class WebhooksController {
       endpoint: webhook.endpoint,
     });
 
-    const result = await this.webhooksService.triggerWebhook(webhook.endpoint, triggerData);
+    const result = await this.webhooksService.triggerWebhook(
+      webhook.endpoint,
+      triggerData,
+    );
     return ResponseUtil.success(result, 'Webhook test completed');
   }
 }

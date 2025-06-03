@@ -1,30 +1,30 @@
 "use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
-import { Button } from '@repo/ui/button';
-import { Badge } from '@repo/ui/badge';
-import { 
-  ExecutionDetails, 
-  getStatusColor, 
-  getTriggerIcon, 
-  formatDuration, 
-  formatCost, 
-  formatTokens 
-} from './execution-types';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  Play, 
-  Square, 
-  RotateCcw, 
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
+import { Button } from "@repo/ui/button";
+import { Badge } from "@repo/ui/badge";
+import {
+  ExecutionDetails,
+  getStatusColor,
+  getTriggerIcon,
+  formatDuration,
+  formatCost,
+  formatTokens,
+} from "./execution-types";
+import {
+  ChevronDown,
+  ChevronRight,
+  Play,
+  Square,
+  RotateCcw,
   ExternalLink,
   Clock,
   DollarSign,
   Zap,
-  AlertCircle
-} from 'lucide-react';
-import { cn } from '@repo/ui/lib/utils';
+  AlertCircle,
+} from "lucide-react";
+import { cn } from "@repo/ui/lib/utils";
 
 interface ExecutionCardProps {
   execution: ExecutionDetails;
@@ -33,41 +33,46 @@ interface ExecutionCardProps {
   onCancel?: (executionId: number) => void;
 }
 
-export function ExecutionCard({ 
-  execution, 
-  onViewDetails, 
-  onRetry, 
-  onCancel 
+export function ExecutionCard({
+  execution,
+  onViewDetails,
+  onRetry,
+  onCancel,
 }: ExecutionCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   const statusColor = getStatusColor(execution.status);
   const triggerIcon = getTriggerIcon(execution.triggerType);
-  const progressPercentage = execution.totalSteps > 0 
-    ? (execution.completedSteps / execution.totalSteps) * 100 
-    : 0;
+  const progressPercentage =
+    execution.totalSteps > 0
+      ? (execution.completedSteps / execution.totalSteps) * 100
+      : 0;
 
   return (
     <Card className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className={cn(
-              "w-3 h-3 rounded-full border",
-              statusColor
-            )} />
+            <div className={cn("w-3 h-3 rounded-full border", statusColor)} />
             <div>
               <CardTitle className="text-white text-base flex items-center space-x-2">
                 <span>{execution.agentName}</span>
                 <span className="text-lg">{triggerIcon}</span>
               </CardTitle>
               <div className="flex items-center space-x-2 mt-1">
-                <Badge variant={
-                  execution.status === 'completed' ? 'completed' :
-                  execution.status === 'running' ? 'running' :
-                  execution.status === 'failed' ? 'failed' :
-                  execution.status === 'pending' ? 'pending' : 'secondary'
-                }>
+                <Badge
+                  variant={
+                    execution.status === "completed"
+                      ? "completed"
+                      : execution.status === "running"
+                        ? "running"
+                        : execution.status === "failed"
+                          ? "failed"
+                          : execution.status === "pending"
+                            ? "pending"
+                            : "secondary"
+                  }
+                >
                   {execution.status}
                 </Badge>
                 <span className="text-xs text-gray-400">
@@ -78,7 +83,7 @@ export function ExecutionCard({
           </div>
 
           <div className="flex items-center space-x-2">
-            {execution.status === 'running' && onCancel && (
+            {execution.status === "running" && onCancel && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -88,7 +93,7 @@ export function ExecutionCard({
                 <Square className="h-3 w-3" />
               </Button>
             )}
-            {execution.status === 'failed' && onRetry && (
+            {execution.status === "failed" && onRetry && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -116,14 +121,16 @@ export function ExecutionCard({
 
       <CardContent className="space-y-4">
         {/* Progress Bar */}
-        {execution.status === 'running' && (
+        {execution.status === "running" && (
           <div className="space-y-2">
             <div className="flex justify-between text-xs text-gray-400">
               <span>Progress</span>
-              <span>{execution.completedSteps}/{execution.totalSteps} steps</span>
+              <span>
+                {execution.completedSteps}/{execution.totalSteps} steps
+              </span>
             </div>
             <div className="w-full bg-gray-700 rounded-full h-2">
-              <div 
+              <div
                 className="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${progressPercentage}%` }}
               />
@@ -153,9 +160,7 @@ export function ExecutionCard({
               <DollarSign className="h-3 w-3 mr-1" />
               Cost
             </div>
-            <div className="text-white">
-              {formatCost(execution.cost)}
-            </div>
+            <div className="text-white">{formatCost(execution.cost)}</div>
           </div>
           <div>
             <div className="text-gray-400 text-xs flex items-center">
@@ -175,7 +180,9 @@ export function ExecutionCard({
               <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
               <div>
                 <div className="text-red-400 text-sm font-medium">Error</div>
-                <div className="text-red-300 text-xs mt-1">{execution.error}</div>
+                <div className="text-red-300 text-xs mt-1">
+                  {execution.error}
+                </div>
               </div>
             </div>
           </div>
@@ -187,7 +194,9 @@ export function ExecutionCard({
             {/* Trigger Data */}
             {execution.triggerData && (
               <div>
-                <div className="text-sm font-medium text-white mb-2">Trigger Data</div>
+                <div className="text-sm font-medium text-white mb-2">
+                  Trigger Data
+                </div>
                 <div className="bg-black/20 rounded-lg p-3">
                   <pre className="text-xs text-gray-300 overflow-x-auto">
                     {JSON.stringify(execution.triggerData, null, 2)}
@@ -198,10 +207,12 @@ export function ExecutionCard({
 
             {/* Steps */}
             <div>
-              <div className="text-sm font-medium text-white mb-2">Execution Steps</div>
+              <div className="text-sm font-medium text-white mb-2">
+                Execution Steps
+              </div>
               <div className="space-y-2">
                 {execution.steps.map((step, index) => (
-                  <div 
+                  <div
                     key={step.id}
                     className="flex items-center justify-between p-2 bg-black/20 rounded-lg"
                   >
@@ -209,13 +220,19 @@ export function ExecutionCard({
                       <div className="text-xs text-gray-400 w-6">
                         {index + 1}
                       </div>
-                      <div className={cn(
-                        "w-2 h-2 rounded-full",
-                        getStatusColor(step.status)
-                      )} />
+                      <div
+                        className={cn(
+                          "w-2 h-2 rounded-full",
+                          getStatusColor(step.status),
+                        )}
+                      />
                       <div>
-                        <div className="text-sm text-white">{step.nodeType}</div>
-                        <div className="text-xs text-gray-400">{step.nodeId}</div>
+                        <div className="text-sm text-white">
+                          {step.nodeType}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {step.nodeId}
+                        </div>
                       </div>
                     </div>
                     <div className="text-xs text-gray-400">

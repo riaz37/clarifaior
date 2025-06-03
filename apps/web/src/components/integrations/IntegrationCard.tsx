@@ -1,27 +1,41 @@
 "use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@repo/ui/card';
-import { Button } from '@repo/ui/button';
-import { Badge } from '@repo/ui/badge';
-import { StatusIcon } from '@repo/ui/icons';
-import { 
-  Settings, 
-  ExternalLink, 
-  RefreshCw, 
-  Trash2, 
-  CheckCircle, 
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/card";
+import { Button } from "@repo/ui/button";
+import { Badge } from "@repo/ui/badge";
+import { StatusIcon } from "@repo/ui/icons";
+import {
+  Settings,
+  ExternalLink,
+  RefreshCw,
+  Trash2,
+  CheckCircle,
   AlertCircle,
   Clock,
-  Key
-} from 'lucide-react';
+  Key,
+} from "lucide-react";
 
 export interface Integration {
   id: string;
   name: string;
   description: string;
-  type: 'deepseek' | 'gemini' | 'openai' | 'gmail' | 'slack' | 'notion' | 'pinecone' | 'webhook';
-  status: 'connected' | 'disconnected' | 'error' | 'pending';
+  type:
+    | "deepseek"
+    | "gemini"
+    | "openai"
+    | "gmail"
+    | "slack"
+    | "notion"
+    | "pinecone"
+    | "webhook";
+  status: "connected" | "disconnected" | "error" | "pending";
   isConfigured: boolean;
   lastUsed?: string;
   usageCount?: number;
@@ -40,25 +54,25 @@ interface IntegrationCardProps {
 }
 
 const integrationIcons: Record<string, string> = {
-  deepseek: '🧠',
-  gemini: '💎',
-  openai: '🤖',
-  gmail: '📧',
-  slack: '💬',
-  notion: '📝',
-  pinecone: '🌲',
-  webhook: '🔗',
+  deepseek: "🧠",
+  gemini: "💎",
+  openai: "🤖",
+  gmail: "📧",
+  slack: "💬",
+  notion: "📝",
+  pinecone: "🌲",
+  webhook: "🔗",
 };
 
 const integrationColors: Record<string, string> = {
-  deepseek: 'from-blue-500 to-cyan-500',
-  gemini: 'from-purple-500 to-pink-500',
-  openai: 'from-green-500 to-teal-500',
-  gmail: 'from-red-500 to-orange-500',
-  slack: 'from-purple-600 to-indigo-600',
-  notion: 'from-gray-600 to-gray-800',
-  pinecone: 'from-green-600 to-emerald-600',
-  webhook: 'from-blue-600 to-cyan-600',
+  deepseek: "from-blue-500 to-cyan-500",
+  gemini: "from-purple-500 to-pink-500",
+  openai: "from-green-500 to-teal-500",
+  gmail: "from-red-500 to-orange-500",
+  slack: "from-purple-600 to-indigo-600",
+  notion: "from-gray-600 to-gray-800",
+  pinecone: "from-green-600 to-emerald-600",
+  webhook: "from-blue-600 to-cyan-600",
 };
 
 export function IntegrationCard({
@@ -66,7 +80,7 @@ export function IntegrationCard({
   onConnect,
   onDisconnect,
   onConfigure,
-  onTest
+  onTest,
 }: IntegrationCardProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -81,13 +95,13 @@ export function IntegrationCard({
 
   const getStatusBadge = () => {
     switch (integration.status) {
-      case 'connected':
+      case "connected":
         return <Badge variant="success">Connected</Badge>;
-      case 'disconnected':
+      case "disconnected":
         return <Badge variant="secondary">Disconnected</Badge>;
-      case 'error':
+      case "error":
         return <Badge variant="destructive">Error</Badge>;
-      case 'pending':
+      case "pending":
         return <Badge variant="warning">Pending</Badge>;
       default:
         return <Badge variant="outline">{integration.status}</Badge>;
@@ -96,11 +110,11 @@ export function IntegrationCard({
 
   const getStatusIcon = () => {
     switch (integration.status) {
-      case 'connected':
+      case "connected":
         return <StatusIcon status="success" className="h-4 w-4" />;
-      case 'error':
+      case "error":
         return <StatusIcon status="error" className="h-4 w-4" />;
-      case 'pending':
+      case "pending":
         return <StatusIcon status="warning" className="h-4 w-4" />;
       default:
         return <StatusIcon status="info" className="h-4 w-4" />;
@@ -112,8 +126,12 @@ export function IntegrationCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
-            <div className={`w-12 h-12 bg-gradient-to-r ${integrationColors[integration.type]} rounded-lg flex items-center justify-center`}>
-              <span className="text-2xl">{integrationIcons[integration.type]}</span>
+            <div
+              className={`w-12 h-12 bg-gradient-to-r ${integrationColors[integration.type]} rounded-lg flex items-center justify-center`}
+            >
+              <span className="text-2xl">
+                {integrationIcons[integration.type]}
+              </span>
             </div>
             <div>
               <CardTitle className="text-white text-lg flex items-center space-x-2">
@@ -149,15 +167,19 @@ export function IntegrationCard({
             <div className="flex items-start space-x-2">
               <AlertCircle className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
               <div>
-                <div className="text-red-400 text-sm font-medium">Connection Error</div>
-                <div className="text-red-300 text-xs mt-1">{integration.error}</div>
+                <div className="text-red-400 text-sm font-medium">
+                  Connection Error
+                </div>
+                <div className="text-red-300 text-xs mt-1">
+                  {integration.error}
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {/* Usage Stats */}
-        {integration.status === 'connected' && (
+        {integration.status === "connected" && (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-gray-400">Usage Count</p>
@@ -168,10 +190,9 @@ export function IntegrationCard({
             <div>
               <p className="text-xs text-gray-400">Last Used</p>
               <p className="text-sm text-gray-300">
-                {integration.lastUsed 
+                {integration.lastUsed
                   ? new Date(integration.lastUsed).toLocaleDateString()
-                  : 'Never'
-                }
+                  : "Never"}
               </p>
             </div>
           </div>
@@ -198,7 +219,7 @@ export function IntegrationCard({
         {/* Actions */}
         <div className="flex items-center justify-between pt-2 border-t border-white/10">
           <div className="flex items-center space-x-2">
-            {integration.status === 'connected' ? (
+            {integration.status === "connected" ? (
               <>
                 {onTest && (
                   <Button
@@ -208,7 +229,9 @@ export function IntegrationCard({
                     disabled={isLoading}
                     className="text-blue-400 hover:text-blue-300"
                   >
-                    <RefreshCw className={`h-3 w-3 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                    <RefreshCw
+                      className={`h-3 w-3 mr-2 ${isLoading ? "animate-spin" : ""}`}
+                    />
                     Test
                   </Button>
                 )}
@@ -216,7 +239,9 @@ export function IntegrationCard({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleAction(() => onConfigure!(integration.id))}
+                    onClick={() =>
+                      handleAction(() => onConfigure!(integration.id))
+                    }
                     disabled={isLoading}
                     className="text-gray-400 hover:text-white"
                   >
@@ -240,7 +265,7 @@ export function IntegrationCard({
             )}
           </div>
 
-          {integration.status === 'connected' && onDisconnect && (
+          {integration.status === "connected" && onDisconnect && (
             <Button
               variant="ghost"
               size="sm"

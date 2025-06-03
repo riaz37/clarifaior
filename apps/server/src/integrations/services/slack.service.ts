@@ -9,7 +9,7 @@ export class SlackService {
 
   constructor(private logger: LoggerService) {
     this.logger.setContext('SlackService');
-    
+
     const botToken = process.env.SLACK_BOT_TOKEN;
     if (!botToken) {
       this.logger.warn('Slack bot token not configured');
@@ -59,7 +59,6 @@ export class SlackService {
         channel: cleanChannel,
         permalink: result.message?.permalink,
       };
-
     } catch (error) {
       this.logger.error(`Slack message failed`, error.stack, {
         channel,
@@ -70,7 +69,9 @@ export class SlackService {
       if (error.data?.error === 'channel_not_found') {
         throw new BadRequestException(`Slack channel '${channel}' not found`);
       } else if (error.data?.error === 'not_in_channel') {
-        throw new BadRequestException(`Bot is not a member of channel '${channel}'`);
+        throw new BadRequestException(
+          `Bot is not a member of channel '${channel}'`,
+        );
       } else if (error.data?.error === 'invalid_auth') {
         throw new BadRequestException('Invalid Slack bot token');
       }
@@ -94,16 +95,19 @@ export class SlackService {
         throw new Error(`Slack API error: ${result.error}`);
       }
 
-      return result.channels?.map(channel => ({
-        id: channel.id,
-        name: channel.name,
-        isPrivate: channel.is_private,
-        isMember: channel.is_member,
-      })) || [];
-
+      return (
+        result.channels?.map((channel) => ({
+          id: channel.id,
+          name: channel.name,
+          isPrivate: channel.is_private,
+          isMember: channel.is_member,
+        })) || []
+      );
     } catch (error) {
       this.logger.error('Failed to get Slack channels', error.stack);
-      throw new BadRequestException(`Failed to get Slack channels: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to get Slack channels: ${error.message}`,
+      );
     }
   }
 
@@ -129,10 +133,11 @@ export class SlackService {
         email: user?.profile?.email,
         avatar: user?.profile?.image_72,
       };
-
     } catch (error) {
       this.logger.error('Failed to get Slack user info', error.stack);
-      throw new BadRequestException(`Failed to get Slack user info: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to get Slack user info: ${error.message}`,
+      );
     }
   }
 
@@ -161,10 +166,11 @@ export class SlackService {
         channel: channelId,
         message,
       });
-
     } catch (error) {
       this.logger.error('Failed to send Slack DM', error.stack);
-      throw new BadRequestException(`Failed to send Slack DM: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to send Slack DM: ${error.message}`,
+      );
     }
   }
 
@@ -175,7 +181,7 @@ export class SlackService {
 
     try {
       const result = await this.client.auth.test();
-      
+
       if (result.ok) {
         this.logger.log('Slack connection test successful', {
           teamId: result.team_id,

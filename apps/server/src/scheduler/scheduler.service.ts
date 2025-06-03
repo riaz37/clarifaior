@@ -1,4 +1,10 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import * as cron from 'node-cron';
 import * as moment from 'moment-timezone';
 import { eq, and, lte } from 'drizzle-orm';
@@ -37,8 +43,17 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     this.stopAllSchedules();
   }
 
-  async createSchedule(createScheduleDto: CreateScheduleDto, userId: number): Promise<any> {
-    const { agentId, name, cronExpression, timezone = 'UTC', config } = createScheduleDto;
+  async createSchedule(
+    createScheduleDto: CreateScheduleDto,
+    userId: number,
+  ): Promise<any> {
+    const {
+      agentId,
+      name,
+      cronExpression,
+      timezone = 'UTC',
+      config,
+    } = createScheduleDto;
 
     this.logger.log(`Creating schedule for agent: ${agentId}`, {
       userId,
@@ -113,7 +128,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
       .from(schedules)
       .where(eq(schedules.agentId, agentId));
 
-    return scheduleList.map(schedule => ({
+    return scheduleList.map((schedule) => ({
       id: schedule.id,
       name: schedule.name,
       cronExpression: schedule.cronExpression,
@@ -126,7 +141,11 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     }));
   }
 
-  async updateSchedule(scheduleId: number, updates: Partial<CreateScheduleDto>, userId: number): Promise<any> {
+  async updateSchedule(
+    scheduleId: number,
+    updates: Partial<CreateScheduleDto>,
+    userId: number,
+  ): Promise<any> {
     this.logger.log(`Updating schedule: ${scheduleId}`, { userId, scheduleId });
 
     // Validate cron expression if provided
@@ -207,7 +226,10 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async toggleSchedule(scheduleId: number, isActive: boolean): Promise<void> {
-    this.logger.log(`Toggling schedule: ${scheduleId} to ${isActive}`, { scheduleId, isActive });
+    this.logger.log(`Toggling schedule: ${scheduleId} to ${isActive}`, {
+      scheduleId,
+      isActive,
+    });
 
     const [schedule] = await this.databaseService.db
       .update(schedules)
@@ -249,7 +271,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
         {
           scheduled: true,
           timezone: schedule.timezone,
-        }
+        },
       );
 
       this.scheduledTasks.set(schedule.id, task);
@@ -260,7 +282,10 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
         timezone: schedule.timezone,
       });
     } catch (error) {
-      this.logger.error(`Failed to start schedule: ${schedule.id}`, error.stack);
+      this.logger.error(
+        `Failed to start schedule: ${schedule.id}`,
+        error.stack,
+      );
     }
   }
 
@@ -312,8 +337,11 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
       );
 
       // Update schedule stats
-      const nextRun = this.calculateNextRun(schedule.cronExpression, schedule.timezone);
-      
+      const nextRun = this.calculateNextRun(
+        schedule.cronExpression,
+        schedule.timezone,
+      );
+
       await this.databaseService.db
         .update(schedules)
         .set({
@@ -322,19 +350,25 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
           runCount: schedule.runCount + 1,
         })
         .where(eq(schedules.id, schedule.id));
-
     } catch (error) {
-      this.logger.error(`Scheduled execution failed: ${schedule.id}`, error.stack, {
-        scheduleId: schedule.id,
-        agentId: schedule.agentId,
-      });
+      this.logger.error(
+        `Scheduled execution failed: ${schedule.id}`,
+        error.stack,
+        {
+          scheduleId: schedule.id,
+          agentId: schedule.agentId,
+        },
+      );
     }
   }
 
   private calculateNextRun(cronExpression: string, timezone: string): Date {
     const now = moment.tz(timezone);
-    const cronJob = cron.schedule(cronExpression, () => {}, { scheduled: false, timezone });
-    
+    const cronJob = cron.schedule(cronExpression, () => {}, {
+      scheduled: false,
+      timezone,
+    });
+
     // Simple next run calculation - in production, use a proper cron parser
     const nextRun = moment.tz(timezone).add(1, 'minute');
     return nextRun.toDate();

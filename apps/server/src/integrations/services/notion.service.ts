@@ -9,7 +9,7 @@ export class NotionService {
 
   constructor(private logger: LoggerService) {
     this.logger.setContext('NotionService');
-    
+
     const token = process.env.NOTION_TOKEN;
     if (!token) {
       this.logger.warn('Notion token not configured');
@@ -65,7 +65,6 @@ export class NotionService {
         title,
         createdTime: response.created_time,
       };
-
     } catch (error) {
       this.logger.error(`Notion page creation failed`, error.stack, {
         database,
@@ -74,14 +73,22 @@ export class NotionService {
       });
 
       if (error.code === 'object_not_found') {
-        throw new BadRequestException(`Notion database '${database}' not found`);
+        throw new BadRequestException(
+          `Notion database '${database}' not found`,
+        );
       } else if (error.code === 'unauthorized') {
-        throw new BadRequestException('Invalid Notion token or insufficient permissions');
+        throw new BadRequestException(
+          'Invalid Notion token or insufficient permissions',
+        );
       } else if (error.code === 'validation_error') {
-        throw new BadRequestException(`Notion validation error: ${error.message}`);
+        throw new BadRequestException(
+          `Notion validation error: ${error.message}`,
+        );
       }
 
-      throw new BadRequestException(`Notion page creation failed: ${error.message}`);
+      throw new BadRequestException(
+        `Notion page creation failed: ${error.message}`,
+      );
     }
   }
 
@@ -109,10 +116,11 @@ export class NotionService {
         lastEditedTime: db.last_edited_time,
         properties: Object.keys(db.properties || {}),
       }));
-
     } catch (error) {
       this.logger.error('Failed to get Notion databases', error.stack);
-      throw new BadRequestException(`Failed to get Notion databases: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to get Notion databases: ${error.message}`,
+      );
     }
   }
 
@@ -126,23 +134,29 @@ export class NotionService {
         database_id: databaseId,
       });
 
-      const properties = Object.entries(response.properties || {}).map(([name, prop]: [string, any]) => ({
-        name,
-        type: prop.type,
-        id: prop.id,
-        required: prop.required || false,
-        options: prop.select?.options || prop.multi_select?.options || [],
-      }));
+      const properties = Object.entries(response.properties || {}).map(
+        ([name, prop]: [string, any]) => ({
+          name,
+          type: prop.type,
+          id: prop.id,
+          required: prop.required || false,
+          options: prop.select?.options || prop.multi_select?.options || [],
+        }),
+      );
 
       return {
         id: response.id,
         title: response.title?.[0]?.plain_text || 'Untitled',
         properties,
       };
-
     } catch (error) {
-      this.logger.error('Failed to get Notion database properties', error.stack);
-      throw new BadRequestException(`Failed to get database properties: ${error.message}`);
+      this.logger.error(
+        'Failed to get Notion database properties',
+        error.stack,
+      );
+      throw new BadRequestException(
+        `Failed to get database properties: ${error.message}`,
+      );
     }
   }
 
@@ -153,7 +167,7 @@ export class NotionService {
 
     try {
       const response = await this.client.users.me();
-      
+
       if (response.id) {
         this.logger.log('Notion connection test successful', {
           userId: response.id,
@@ -169,7 +183,9 @@ export class NotionService {
     }
   }
 
-  private formatProperties(properties: Record<string, any>): Record<string, any> {
+  private formatProperties(
+    properties: Record<string, any>,
+  ): Record<string, any> {
     const formatted: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(properties)) {
@@ -193,7 +209,7 @@ export class NotionService {
         };
       } else if (Array.isArray(value)) {
         formatted[key] = {
-          multi_select: value.map(item => ({ name: item })),
+          multi_select: value.map((item) => ({ name: item })),
         };
       } else if (value && typeof value === 'object') {
         // Handle complex property types

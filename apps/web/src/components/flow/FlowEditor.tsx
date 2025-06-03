@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from "react";
 import ReactFlow, {
   Node,
   Edge,
@@ -13,14 +13,14 @@ import ReactFlow, {
   Controls,
   MiniMap,
   ReactFlowInstance,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+} from "reactflow";
+import "reactflow/dist/style.css";
 
-import { NodeSidebar } from './NodeSidebar';
-import { nodeTypes, NodeType, getDefaultNodeData } from './node-types';
-import { Button } from '@repo/ui/button';
-import { Badge } from '@repo/ui/badge';
-import { Play, Save, Download, Upload, Undo, Redo } from 'lucide-react';
+import { NodeSidebar } from "./NodeSidebar";
+import { nodeTypes, NodeType, getDefaultNodeData } from "./node-types";
+import { Button } from "@repo/ui/button";
+import { Badge } from "@repo/ui/badge";
+import { Play, Save, Download, Upload, Undo, Redo } from "lucide-react";
 
 const initialNodes: Node[] = [];
 const initialEdges: Edge[] = [];
@@ -35,17 +35,18 @@ export function FlowEditor({ agentId, onSave, onExecute }: FlowEditorProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const [reactFlowInstance, setReactFlowInstance] =
+    useState<ReactFlowInstance | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    [setEdges],
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = "move";
   }, []);
 
   const onDrop = useCallback(
@@ -53,7 +54,7 @@ export function FlowEditor({ agentId, onSave, onExecute }: FlowEditorProps) {
       event.preventDefault();
 
       const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
-      const data = event.dataTransfer.getData('application/reactflow');
+      const data = event.dataTransfer.getData("application/reactflow");
 
       if (!data || !reactFlowBounds || !reactFlowInstance) {
         return;
@@ -77,7 +78,7 @@ export function FlowEditor({ agentId, onSave, onExecute }: FlowEditorProps) {
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [reactFlowInstance, setNodes]
+    [reactFlowInstance, setNodes],
   );
 
   const handleSave = useCallback(() => {
@@ -103,37 +104,41 @@ export function FlowEditor({ agentId, onSave, onExecute }: FlowEditorProps) {
       edges,
       viewport: reactFlowInstance?.getViewport(),
     };
-    
+
     const dataStr = JSON.stringify(flowData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `agent-flow-${agentId || 'new'}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
+    const dataUri =
+      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+
+    const exportFileDefaultName = `agent-flow-${agentId || "new"}.json`;
+
+    const linkElement = document.createElement("a");
+    linkElement.setAttribute("href", dataUri);
+    linkElement.setAttribute("download", exportFileDefaultName);
     linkElement.click();
   }, [nodes, edges, reactFlowInstance, agentId]);
 
-  const handleImport = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleImport = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const flowData = JSON.parse(e.target?.result as string);
-        if (flowData.nodes) setNodes(flowData.nodes);
-        if (flowData.edges) setEdges(flowData.edges);
-        if (flowData.viewport && reactFlowInstance) {
-          reactFlowInstance.setViewport(flowData.viewport);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const flowData = JSON.parse(e.target?.result as string);
+          if (flowData.nodes) setNodes(flowData.nodes);
+          if (flowData.edges) setEdges(flowData.edges);
+          if (flowData.viewport && reactFlowInstance) {
+            reactFlowInstance.setViewport(flowData.viewport);
+          }
+        } catch (error) {
+          console.error("Failed to import flow:", error);
         }
-      } catch (error) {
-        console.error('Failed to import flow:', error);
-      }
-    };
-    reader.readAsText(file);
-  }, [setNodes, setEdges, reactFlowInstance]);
+      };
+      reader.readAsText(file);
+    },
+    [setNodes, setEdges, reactFlowInstance],
+  );
 
   return (
     <div className="flex h-full bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900">
@@ -186,7 +191,9 @@ export function FlowEditor({ agentId, onSave, onExecute }: FlowEditorProps) {
                   variant="ghost"
                   size="sm"
                   className="text-gray-400 hover:text-white"
-                  onClick={() => document.getElementById('import-flow')?.click()}
+                  onClick={() =>
+                    document.getElementById("import-flow")?.click()
+                  }
                 >
                   <Upload className="h-4 w-4 mr-2" />
                   Import
@@ -220,7 +227,7 @@ export function FlowEditor({ agentId, onSave, onExecute }: FlowEditorProps) {
                   disabled={isExecuting || nodes.length === 0}
                 >
                   <Play className="h-4 w-4 mr-2" />
-                  {isExecuting ? 'Executing...' : 'Execute'}
+                  {isExecuting ? "Executing..." : "Execute"}
                 </Button>
               </div>
             </div>
@@ -241,21 +248,16 @@ export function FlowEditor({ agentId, onSave, onExecute }: FlowEditorProps) {
               fitView
               className="bg-transparent"
               defaultEdgeOptions={{
-                style: { stroke: '#64748b', strokeWidth: 2 },
-                type: 'smoothstep',
+                style: { stroke: "#64748b", strokeWidth: 2 },
+                type: "smoothstep",
               }}
             >
-              <Background 
-                color="#1e293b" 
-                gap={20} 
-                size={1}
-                variant="dots"
-              />
-              <Controls 
+              <Background color="#1e293b" gap={20} size={1} variant="dots" />
+              <Controls
                 className="bg-gray-900/90 border border-white/10 rounded-lg"
                 showInteractive={false}
               />
-              <MiniMap 
+              <MiniMap
                 className="bg-gray-900/90 border border-white/10 rounded-lg"
                 nodeColor="#64748b"
                 maskColor="rgba(0, 0, 0, 0.2)"

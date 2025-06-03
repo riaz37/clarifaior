@@ -1,23 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { AIPulseIcon, RobotIcon, FlowIcon, TriggerIcon, GearIcon } from "@repo/ui/icons";
+import {
+  AIPulseIcon,
+  RobotIcon,
+  FlowIcon,
+  TriggerIcon,
+  GearIcon,
+} from "@repo/ui/icons";
 import { Button } from "@repo/ui/button";
 import { Badge } from "@repo/ui/badge";
-import { 
-  Home, 
-  Bot, 
-  Workflow, 
-  Zap, 
-  Settings, 
-  Users, 
-  BarChart3, 
-  Bell, 
+import {
+  Home,
+  Bot,
+  Workflow,
+  Zap,
+  Settings,
+  Users,
+  BarChart3,
+  Bell,
   Search,
   Menu,
   X,
   ChevronDown,
-  Plus
+  Plus,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -27,11 +33,26 @@ interface DashboardLayoutProps {
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home, current: false },
   { name: "Agents", href: "/dashboard/agents", icon: Bot, current: false },
-  { name: "Executions", href: "/dashboard/executions", icon: BarChart3, current: false },
+  {
+    name: "Executions",
+    href: "/dashboard/executions",
+    icon: BarChart3,
+    current: false,
+  },
   { name: "Triggers", href: "/dashboard/triggers", icon: Zap, current: false },
-  { name: "Integrations", href: "/dashboard/integrations", icon: TriggerIcon, current: false },
+  {
+    name: "Integrations",
+    href: "/dashboard/integrations",
+    icon: TriggerIcon,
+    current: false,
+  },
   { name: "Team", href: "/dashboard/team", icon: Users, current: false },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings, current: false },
+  {
+    name: "Settings",
+    href: "/dashboard/settings",
+    icon: Settings,
+    current: false,
+  },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -41,8 +62,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900">
       {/* Mobile sidebar */}
-      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+      <div
+        className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? "block" : "hidden"}`}
+      >
+        <div
+          className="fixed inset-0 bg-black/50"
+          onClick={() => setSidebarOpen(false)}
+        />
         <div className="fixed inset-y-0 left-0 w-64 bg-gray-900/95 backdrop-blur-xl border-r border-white/10">
           <div className="flex items-center justify-between h-16 px-4 border-b border-white/10">
             <div className="flex items-center space-x-2">
@@ -67,8 +93,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 href={item.href}
                 className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg mb-1 transition-colors ${
                   item.current
-                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                    ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                    : "text-gray-300 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <item.icon className="mr-3 h-5 w-5" />
@@ -121,13 +147,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 href={item.href}
                 className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   item.current
-                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                    ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                    : "text-gray-300 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <item.icon className="mr-3 h-5 w-5" />
                 {item.name}
-                {item.name === 'Executions' && (
+                {item.name === "Executions" && (
                   <Badge variant="running" className="ml-auto">
                     3
                   </Badge>
@@ -160,7 +186,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               >
                 <Menu className="h-5 w-5" />
               </Button>
-              
+
               {/* Search */}
               <div className="hidden sm:block ml-4">
                 <div className="relative">
@@ -176,7 +202,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
             <div className="flex items-center space-x-4">
               {/* Notifications */}
-              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-400 hover:text-white relative"
+              >
                 <Bell className="h-5 w-5" />
                 <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
               </Button>
@@ -196,9 +226,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Page content */}
-        <main className="flex-1">
-          {children}
-        </main>
+        <main className="flex-1">{children}</main>
       </div>
     </div>
   );

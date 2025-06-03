@@ -1,7 +1,13 @@
 "use client";
 
 import { AIPulseIcon } from "@repo/ui/icons";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/card";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -10,11 +16,11 @@ interface AuthLayoutProps {
   showLogo?: boolean;
 }
 
-export function AuthLayout({ 
-  children, 
-  title, 
-  description, 
-  showLogo = true 
+export function AuthLayout({
+  children,
+  title,
+  description,
+  showLogo = true,
 }: AuthLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
@@ -49,9 +55,7 @@ export function AuthLayout({
               {description}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            {children}
-          </CardContent>
+          <CardContent>{children}</CardContent>
         </Card>
 
         <div className="text-center mt-6">

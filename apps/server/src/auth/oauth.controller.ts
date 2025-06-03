@@ -66,17 +66,21 @@ export class OAuthController {
   ) {
     if (error) {
       this.logger.error(`Google OAuth error: ${error}`);
-      return res.redirect(`${process.env.CORS_ORIGIN}/integrations?error=${encodeURIComponent(error)}`);
+      return res.redirect(
+        `${process.env.CORS_ORIGIN}/integrations?error=${encodeURIComponent(error)}`,
+      );
     }
 
     if (!code || !state) {
       this.logger.error('Missing code or state in Google OAuth callback');
-      return res.redirect(`${process.env.CORS_ORIGIN}/integrations?error=missing_parameters`);
+      return res.redirect(
+        `${process.env.CORS_ORIGIN}/integrations?error=missing_parameters`,
+      );
     }
 
     try {
       const result = await this.oauthService.handleGoogleCallback(code, state);
-      
+
       this.logger.log('Google OAuth callback successful', {
         email: result.email,
         hasRefreshToken: result.hasRefreshToken,
@@ -90,11 +94,14 @@ export class OAuthController {
         name: result.name,
       });
 
-      res.redirect(`${process.env.CORS_ORIGIN}/integrations?${params.toString()}`);
-
+      res.redirect(
+        `${process.env.CORS_ORIGIN}/integrations?${params.toString()}`,
+      );
     } catch (error) {
       this.logger.error('Google OAuth callback failed', error.stack);
-      res.redirect(`${process.env.CORS_ORIGIN}/integrations?error=${encodeURIComponent(error.message)}`);
+      res.redirect(
+        `${process.env.CORS_ORIGIN}/integrations?error=${encodeURIComponent(error.message)}`,
+      );
     }
   }
 
@@ -105,7 +112,10 @@ export class OAuthController {
     @Query('workspaceId') workspaceId: string,
     @CurrentUser() user: any,
   ) {
-    const connections = await this.oauthService.getUserConnections(user.id, +workspaceId);
+    const connections = await this.oauthService.getUserConnections(
+      user.id,
+      +workspaceId,
+    );
     return ResponseUtil.success(connections);
   }
 
@@ -130,7 +140,8 @@ export class OAuthController {
   @UseGuards(JwtAuthGuard, RbacGuard)
   @RequirePermissions(Permission.INTEGRATION_CREATE)
   async setupGmailWatch(
-    @Body() body: {
+    @Body()
+    body: {
       workspaceId: number;
       agentId?: number;
       labelIds?: string[];
@@ -198,8 +209,11 @@ export class OAuthController {
     @CurrentUser() user: any,
   ) {
     try {
-      const token = await this.oauthService.getValidGoogleToken(user.id, +workspaceId);
-      
+      const token = await this.oauthService.getValidGoogleToken(
+        user.id,
+        +workspaceId,
+      );
+
       return ResponseUtil.success({
         hasToken: true,
         expiresAt: token.expiresAt?.toISOString(),

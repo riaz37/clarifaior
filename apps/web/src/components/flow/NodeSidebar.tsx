@@ -1,42 +1,55 @@
 "use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/card';
-import { Button } from '@repo/ui/button';
-import { Badge } from '@repo/ui/badge';
-import { Input } from '@repo/ui/input';
-import { NODE_CATEGORIES, NodeType } from './node-types';
-import { Search, ChevronDown, ChevronRight } from 'lucide-react';
-import { cn } from '@repo/ui/lib/utils';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/card";
+import { Button } from "@repo/ui/button";
+import { Badge } from "@repo/ui/badge";
+import { Input } from "@repo/ui/input";
+import { NODE_CATEGORIES, NodeType } from "./node-types";
+import { Search, ChevronDown, ChevronRight } from "lucide-react";
+import { cn } from "@repo/ui/lib/utils";
 
 interface NodeSidebarProps {
   onNodeDragStart: (nodeType: NodeType, nodeData: any) => void;
 }
 
 export function NodeSidebar({ onNodeDragStart }: NodeSidebarProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(['triggers', 'ai']);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([
+    "triggers",
+    "ai",
+  ]);
 
   const toggleCategory = (categoryKey: string) => {
-    setExpandedCategories(prev =>
+    setExpandedCategories((prev) =>
       prev.includes(categoryKey)
-        ? prev.filter(key => key !== categoryKey)
-        : [...prev, categoryKey]
+        ? prev.filter((key) => key !== categoryKey)
+        : [...prev, categoryKey],
     );
   };
 
-  const filteredCategories = Object.entries(NODE_CATEGORIES).map(([key, category]) => ({
-    key,
-    ...category,
-    nodes: category.nodes.filter(node =>
-      node.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      node.description.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-  })).filter(category => category.nodes.length > 0);
+  const filteredCategories = Object.entries(NODE_CATEGORIES)
+    .map(([key, category]) => ({
+      key,
+      ...category,
+      nodes: category.nodes.filter(
+        (node) =>
+          node.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          node.description.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
+    }))
+    .filter((category) => category.nodes.length > 0);
 
-  const handleDragStart = (event: React.DragEvent, nodeType: NodeType, nodeData: any) => {
-    event.dataTransfer.setData('application/reactflow', JSON.stringify({ nodeType, nodeData }));
-    event.dataTransfer.effectAllowed = 'move';
+  const handleDragStart = (
+    event: React.DragEvent,
+    nodeType: NodeType,
+    nodeData: any,
+  ) => {
+    event.dataTransfer.setData(
+      "application/reactflow",
+      JSON.stringify({ nodeType, nodeData }),
+    );
+    event.dataTransfer.effectAllowed = "move";
     onNodeDragStart(nodeType, nodeData);
   };
 
@@ -45,7 +58,7 @@ export function NodeSidebar({ onNodeDragStart }: NodeSidebarProps) {
       {/* Header */}
       <div className="p-4 border-b border-white/10">
         <h2 className="text-lg font-semibold text-white mb-3">Node Library</h2>
-        
+
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -90,19 +103,24 @@ export function NodeSidebar({ onNodeDragStart }: NodeSidebarProps) {
                   <div
                     key={node.type}
                     draggable
-                    onDragStart={(e) => handleDragStart(e, node.type as NodeType, {
-                      label: node.label,
-                      icon: node.icon,
-                      category: category.key,
-                      [category.key === 'triggers' ? 'triggerType' :
-                       category.key === 'ai' ? 'llmType' :
-                       category.key === 'actions' ? 'actionType' :
-                       'logicType']: node.type.split('_')[1],
-                    })}
+                    onDragStart={(e) =>
+                      handleDragStart(e, node.type as NodeType, {
+                        label: node.label,
+                        icon: node.icon,
+                        category: category.key,
+                        [category.key === "triggers"
+                          ? "triggerType"
+                          : category.key === "ai"
+                            ? "llmType"
+                            : category.key === "actions"
+                              ? "actionType"
+                              : "logicType"]: node.type.split("_")[1],
+                      })
+                    }
                     className={cn(
                       "group cursor-grab active:cursor-grabbing p-3 rounded-lg border border-white/10 hover:border-white/20 transition-all duration-200 bg-gradient-to-r",
                       category.color,
-                      "hover:shadow-lg"
+                      "hover:shadow-lg",
                     )}
                   >
                     <div className="flex items-start space-x-3">

@@ -137,18 +137,66 @@ export class SchedulerController {
   @RequirePermissions(Permission.AGENT_READ)
   async getCronPresets() {
     const presets = [
-      { label: 'Every minute', value: '* * * * *', description: 'Runs every minute' },
-      { label: 'Every 5 minutes', value: '*/5 * * * *', description: 'Runs every 5 minutes' },
-      { label: 'Every 15 minutes', value: '*/15 * * * *', description: 'Runs every 15 minutes' },
-      { label: 'Every 30 minutes', value: '*/30 * * * *', description: 'Runs every 30 minutes' },
-      { label: 'Every hour', value: '0 * * * *', description: 'Runs at the start of every hour' },
-      { label: 'Every 6 hours', value: '0 */6 * * *', description: 'Runs every 6 hours' },
-      { label: 'Every 12 hours', value: '0 */12 * * *', description: 'Runs every 12 hours' },
-      { label: 'Daily at midnight', value: '0 0 * * *', description: 'Runs once a day at midnight' },
-      { label: 'Daily at 9 AM', value: '0 9 * * *', description: 'Runs once a day at 9:00 AM' },
-      { label: 'Weekly (Mondays)', value: '0 0 * * 1', description: 'Runs every Monday at midnight' },
-      { label: 'Monthly (1st day)', value: '0 0 1 * *', description: 'Runs on the 1st day of every month' },
-      { label: 'Weekdays only', value: '0 9 * * 1-5', description: 'Runs at 9 AM on weekdays only' },
+      {
+        label: 'Every minute',
+        value: '* * * * *',
+        description: 'Runs every minute',
+      },
+      {
+        label: 'Every 5 minutes',
+        value: '*/5 * * * *',
+        description: 'Runs every 5 minutes',
+      },
+      {
+        label: 'Every 15 minutes',
+        value: '*/15 * * * *',
+        description: 'Runs every 15 minutes',
+      },
+      {
+        label: 'Every 30 minutes',
+        value: '*/30 * * * *',
+        description: 'Runs every 30 minutes',
+      },
+      {
+        label: 'Every hour',
+        value: '0 * * * *',
+        description: 'Runs at the start of every hour',
+      },
+      {
+        label: 'Every 6 hours',
+        value: '0 */6 * * *',
+        description: 'Runs every 6 hours',
+      },
+      {
+        label: 'Every 12 hours',
+        value: '0 */12 * * *',
+        description: 'Runs every 12 hours',
+      },
+      {
+        label: 'Daily at midnight',
+        value: '0 0 * * *',
+        description: 'Runs once a day at midnight',
+      },
+      {
+        label: 'Daily at 9 AM',
+        value: '0 9 * * *',
+        description: 'Runs once a day at 9:00 AM',
+      },
+      {
+        label: 'Weekly (Mondays)',
+        value: '0 0 * * 1',
+        description: 'Runs every Monday at midnight',
+      },
+      {
+        label: 'Monthly (1st day)',
+        value: '0 0 1 * *',
+        description: 'Runs on the 1st day of every month',
+      },
+      {
+        label: 'Weekdays only',
+        value: '0 9 * * 1-5',
+        description: 'Runs at 9 AM on weekdays only',
+      },
     ];
 
     return ResponseUtil.success(presets);

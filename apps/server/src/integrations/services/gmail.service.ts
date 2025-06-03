@@ -30,7 +30,7 @@ export class GmailService {
     this.oauth2Client = new google.auth.OAuth2(
       clientId,
       clientSecret,
-      'http://localhost:3001/auth/gmail/callback' // Redirect URI
+      'http://localhost:3001/auth/gmail/callback', // Redirect URI
     );
 
     this.oauth2Client.setCredentials({
@@ -40,14 +40,21 @@ export class GmailService {
     this.gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
   }
 
-  async sendEmail(request: EmailRequest, userId?: number, workspaceId?: number): Promise<any> {
+  async sendEmail(
+    request: EmailRequest,
+    userId?: number,
+    workspaceId?: number,
+  ): Promise<any> {
     // Try OAuth first if user context provided
     let gmail = this.gmail;
     if (userId && workspaceId) {
       try {
         gmail = await this.getGmailClientWithOAuth(userId, workspaceId);
       } catch (error) {
-        this.logger.warn('OAuth Gmail failed, falling back to service account', { error: error.message });
+        this.logger.warn(
+          'OAuth Gmail failed, falling back to service account',
+          { error: error.message },
+        );
         if (!this.gmail) {
           throw new BadRequestException('Gmail integration not configured');
         }
@@ -88,7 +95,6 @@ export class GmailService {
         subject,
         threadId: result.data.threadId,
       };
-
     } catch (error) {
       this.logger.error(`Gmail email failed`, error.stack, {
         to,
@@ -97,9 +103,13 @@ export class GmailService {
       });
 
       if (error.code === 401) {
-        throw new BadRequestException('Gmail authentication failed - refresh token may be expired');
+        throw new BadRequestException(
+          'Gmail authentication failed - refresh token may be expired',
+        );
       } else if (error.code === 403) {
-        throw new BadRequestException('Gmail API access denied - check permissions');
+        throw new BadRequestException(
+          'Gmail API access denied - check permissions',
+        );
       }
 
       throw new BadRequestException(`Gmail email failed: ${error.message}`);
@@ -140,14 +150,18 @@ export class GmailService {
       });
 
       return emails;
-
     } catch (error) {
       this.logger.error('Failed to get Gmail emails', error.stack);
-      throw new BadRequestException(`Failed to get Gmail emails: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to get Gmail emails: ${error.message}`,
+      );
     }
   }
 
-  async watchEmails(callbackUrl: string, labelIds: string[] = ['INBOX']): Promise<any> {
+  async watchEmails(
+    callbackUrl: string,
+    labelIds: string[] = ['INBOX'],
+  ): Promise<any> {
     if (!this.gmail) {
       throw new BadRequestException('Gmail integration not configured');
     }
@@ -172,10 +186,11 @@ export class GmailService {
         expiration: result.data.expiration,
         webhookUrl: callbackUrl,
       };
-
     } catch (error) {
       this.logger.error('Failed to setup Gmail watch', error.stack);
-      throw new BadRequestException(`Failed to setup Gmail watch: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to setup Gmail watch: ${error.message}`,
+      );
     }
   }
 
@@ -189,17 +204,20 @@ export class GmailService {
         userId: 'me',
       });
 
-      return result.data.labels?.map((label: any) => ({
-        id: label.id,
-        name: label.name,
-        type: label.type,
-        messagesTotal: label.messagesTotal,
-        messagesUnread: label.messagesUnread,
-      })) || [];
-
+      return (
+        result.data.labels?.map((label: any) => ({
+          id: label.id,
+          name: label.name,
+          type: label.type,
+          messagesTotal: label.messagesTotal,
+          messagesUnread: label.messagesUnread,
+        })) || []
+      );
     } catch (error) {
       this.logger.error('Failed to get Gmail labels', error.stack);
-      throw new BadRequestException(`Failed to get Gmail labels: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to get Gmail labels: ${error.message}`,
+      );
     }
   }
 
@@ -228,9 +246,14 @@ export class GmailService {
     }
   }
 
-  private createEmailContent(to: string, subject: string, body: string, html: boolean): string {
+  private createEmailContent(
+    to: string,
+    subject: string,
+    body: string,
+    html: boolean,
+  ): string {
     const boundary = 'boundary_' + Math.random().toString(36).substr(2, 9);
-    
+
     let emailContent = [
       `To: ${to}`,
       `Subject: ${subject}`,
@@ -261,15 +284,17 @@ export class GmailService {
 
   private parseEmailMessage(message: any): any {
     const headers = message.payload.headers;
-    const getHeader = (name: string) => headers.find((h: any) => h.name === name)?.value;
+    const getHeader = (name: string) =>
+      headers.find((h: any) => h.name === name)?.value;
 
     let body = '';
     if (message.payload.body?.data) {
       body = Buffer.from(message.payload.body.data, 'base64url').toString();
     } else if (message.payload.parts) {
       // Handle multipart messages
-      const textPart = message.payload.parts.find((part: any) => 
-        part.mimeType === 'text/plain' || part.mimeType === 'text/html'
+      const textPart = message.payload.parts.find(
+        (part: any) =>
+          part.mimeType === 'text/plain' || part.mimeType === 'text/html',
       );
       if (textPart?.body?.data) {
         body = Buffer.from(textPart.body.data, 'base64url').toString();
@@ -291,16 +316,25 @@ export class GmailService {
   }
 
   private stripHtml(html: string): string {
-    return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
   }
 
-  private async getGmailClientWithOAuth(userId: number, workspaceId: number): Promise<any> {
-    const token = await this.oauthService.getValidGoogleToken(userId, workspaceId);
+  private async getGmailClientWithOAuth(
+    userId: number,
+    workspaceId: number,
+  ): Promise<any> {
+    const token = await this.oauthService.getValidGoogleToken(
+      userId,
+      workspaceId,
+    );
 
     const oauth2Client = new google.auth.OAuth2(
       process.env.GMAIL_CLIENT_ID,
       process.env.GMAIL_CLIENT_SECRET,
-      process.env.GMAIL_REDIRECT_URI
+      process.env.GMAIL_REDIRECT_URI,
     );
 
     oauth2Client.setCredentials({

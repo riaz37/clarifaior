@@ -1,6 +1,6 @@
 // Webhook System Types
 
-export type WebhookStatus = 'active' | 'inactive' | 'failed';
+export type WebhookStatus = "active" | "inactive" | "failed";
 
 export interface Webhook {
   id: number;

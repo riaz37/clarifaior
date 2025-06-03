@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "migrate": "npx drizzle-kit migrate",
     "generate": "drizzle-kit generate",
-    "push": "drizzle-kit push"
+    "push": "drizzle-kit push",
+    "studio": "drizzle-kit studio --port=3001"
   },
   "keywords": [],
   "author": "",
