@@ -187,7 +187,7 @@ export class NodeExecutorService {
         output: {
           messageId: result.messageId,
           channel,
-          timestamp: result.timestamp,
+          timestamp: result.timestamp ? parseFloat(result.timestamp) : 0, // Convert Slack timestamp to number
         },
       };
     } catch (error) {

@@ -14,13 +14,13 @@ import { FlowsService } from './flows.service';
 import { UpdateFlowDto } from './dto/update-flow.dto';
 import { CreateNodeDto } from './dto/create-node.dto';
 import { CreateEdgeDto } from './dto/create-edge.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RbacGuard } from '../auth/guards/rbac.guard';
-import { RequirePermissions } from '../auth/decorators/permissions.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Permission } from '../auth/rbac/permissions';
-import { ResponseUtil } from '../common/utils/response.util';
-import { LoggerService } from '../common/services/logger.service';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { RbacGuard } from '@auth/guards/rbac.guard';
+import { RequirePermissions } from '@auth/decorators/permissions.decorator';
+import { CurrentUser } from '@auth/decorators/current-user.decorator';
+import { Permission } from '@auth/rbac/permissions';
+import { ResponseUtil } from '@common/utils/response.util';
+import { LoggerService } from '@common/services/logger.service';
 
 @Controller('agents/:agentId/flow')
 @UseGuards(JwtAuthGuard, RbacGuard)

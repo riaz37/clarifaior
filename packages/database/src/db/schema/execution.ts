@@ -1,14 +1,15 @@
 import {
   pgTable,
-  serial,
   varchar,
   text,
   timestamp,
-  integer,
   json,
   pgEnum,
   numeric,
+  uuid,
+  integer,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { agents } from "./agent";
 
 export const executionStatusEnum = pgEnum("execution_status", [
@@ -20,9 +21,9 @@ export const executionStatusEnum = pgEnum("execution_status", [
 ]);
 
 export const executions = pgTable("executions", {
-  id: serial("id").primaryKey(),
-  agentId: integer("agent_id")
-    .references(() => agents.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: uuid("agent_id")
+    .references(() => agents.id, { onDelete: 'cascade' })
     .notNull(),
   triggerType: varchar("trigger_type", { length: 100 }).notNull(),
   triggerData: json("trigger_data"), // Data that triggered the execution
@@ -32,12 +33,13 @@ export const executions = pgTable("executions", {
   error: text("error"),
   metadata: json("metadata"), // Additional execution context
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const executionLogs = pgTable("execution_logs", {
-  id: serial("id").primaryKey(),
-  executionId: integer("execution_id")
-    .references(() => executions.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  executionId: uuid("execution_id")
+    .references(() => executions.id, { onDelete: 'cascade' })
     .notNull(),
   nodeId: varchar("node_id", { length: 100 }).notNull(),
   stepNumber: integer("step_number").notNull(),

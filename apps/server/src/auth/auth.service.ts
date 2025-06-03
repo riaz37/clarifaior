@@ -9,15 +9,18 @@ import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { eq, and, or, isNull } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
-import { users } from '@repo/database';
-import { refreshTokens } from '@repo/database/src/db/schema/refresh-token';
-import { workspaces, workspaceMembers } from '@repo/database/src/db/schema/workspace';
+import {
+  users,
+  workspaces,
+  workspaceMembers,
+  refreshTokens,
+} from '@repo/database';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponse, JwtPayload, RefreshTokenResponse } from '@repo/types';
-import { DatabaseService } from '../common/services/database.service';
-import { ValidationService } from '../common/services/validation.service';
-import { LoggerService } from '../common/services/logger.service';
+import { DatabaseService } from '@common/services/database.service';
+import { ValidationService } from '@common/services/validation.service';
+import { LoggerService } from '@common/services/logger.service';
 
 @Injectable()
 export class AuthService {

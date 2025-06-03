@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { LoggerService } from '../common/services/logger.service';
-import { EncryptionService } from '../common/services/encryption.service';
+import { LoggerService } from '@common/services/logger.service';
+import { EncryptionService } from '@common/services/encryption.service';
 import { DeepSeekService } from './services/deepseek.service';
 import { SlackService } from './services/slack.service';
 import { GmailService } from './services/gmail.service';
@@ -31,7 +31,7 @@ export interface MemorySearchRequest {
 export interface SlackMessageRequest {
   channel: string;
   message: string;
-  threadReply?: boolean;
+  threadReply?: string; // Timestamp of the thread to reply to
 }
 
 export interface NotionPageRequest {

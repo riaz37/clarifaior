@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { google } from 'googleapis';
-import { LoggerService } from '../../common/services/logger.service';
-import { OAuthService } from '../../auth/oauth.service';
+import { LoggerService } from '@common/services/logger.service';
+import { OAuthService } from '@auth/oauth.service';
 import { EmailRequest } from '../integration.service';
 
 @Injectable()
@@ -37,7 +37,7 @@ export class GmailService {
       refresh_token: refreshToken,
     });
 
-    this.gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
+    google.gmail({ version: 'v1', auth: this.oauth2Client });
   }
 
   async sendEmail(

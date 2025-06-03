@@ -1,4 +1,19 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@repo/*": ["../../packages/*/src"],
+      "@repo/database": ["../../packages/database/src"],
+      "@repo/types": ["../../packages/types/src"],
+      "@common/*": ["./src/common/*"],
+      "@auth/*": ["./src/auth/*"],
+      "@agents/*": ["./src/agents/*"],
+      "@execution/*": ["./src/execution/*"],
+      "@webhooks/*": ["./src/webhooks/*"],
+      "@integrations/*": ["./src/integrations/*"],
+      "@scheduler/*": ["./src/scheduler/*"]
+    }
+  }
 }

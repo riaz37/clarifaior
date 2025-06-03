@@ -1,13 +1,13 @@
 import {
   pgTable,
-  serial,
   varchar,
   text,
   timestamp,
-  integer,
   json,
   pgEnum,
+  uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { agents } from "./agent";
 
 export const nodeTypeEnum = pgEnum("node_type", [
@@ -26,9 +26,9 @@ export const nodeTypeEnum = pgEnum("node_type", [
 ]);
 
 export const flowNodes = pgTable("flow_nodes", {
-  id: serial("id").primaryKey(),
-  agentId: integer("agent_id")
-    .references(() => agents.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: uuid("agent_id")
+    .references(() => agents.id, { onDelete: 'cascade' })
     .notNull(),
   nodeId: varchar("node_id", { length: 100 }).notNull(), // React Flow node ID
   type: nodeTypeEnum("type").notNull(),
@@ -37,12 +37,18 @@ export const flowNodes = pgTable("flow_nodes", {
   data: json("data").notNull(), // Node-specific configuration
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Add unique constraint on agentId and nodeId
+  agentNodeUnique: unique('agent_node_unique').on(
+    table.agentId,
+    table.nodeId
+  ),
+}));
 
 export const flowEdges = pgTable("flow_edges", {
-  id: serial("id").primaryKey(),
-  agentId: integer("agent_id")
-    .references(() => agents.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: uuid("agent_id")
+    .references(() => agents.id, { onDelete: 'cascade' })
     .notNull(),
   edgeId: varchar("edge_id", { length: 100 }).notNull(), // React Flow edge ID
   source: varchar("source", { length: 100 }).notNull(),
@@ -51,4 +57,21 @@ export const flowEdges = pgTable("flow_edges", {
   targetHandle: varchar("target_handle", { length: 100 }),
   data: json("data"), // Edge-specific configuration
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Add unique constraint on agentId and edgeId
+  agentEdgeUnique: unique('agent_edge_unique').on(
+    table.agentId,
+    table.edgeId
+  )
+}));
+
+// Helper function to create unique constraint
+function unique(name: string) {
+  return {
+    name,
+    on: (...columns: any[]) => ({
+      name,
+      columns,
+    }),
+  };
+}

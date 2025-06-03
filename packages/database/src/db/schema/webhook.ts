@@ -1,14 +1,15 @@
 import {
   pgTable,
-  serial,
+  uuid,
   varchar,
   text,
   timestamp,
-  integer,
   boolean,
   json,
   pgEnum,
+  integer,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { agents } from "./agent";
 import { users } from "./user";
 
@@ -19,28 +20,34 @@ export const webhookStatusEnum = pgEnum("webhook_status", [
 ]);
 
 export const webhooks = pgTable("webhooks", {
-  id: serial("id").primaryKey(),
-  agentId: integer("agent_id")
-    .references(() => agents.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: uuid("agent_id")
+    .references(() => agents.id, { onDelete: 'cascade' })
     .notNull(),
-  createdBy: integer("created_by")
-    .references(() => users.id)
+  createdBy: uuid("created_by")
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   name: varchar("name", { length: 255 }).notNull(),
-  endpoint: varchar("endpoint", { length: 255 }).notNull().unique(), // e.g., /webhooks/abc123
-  secret: text("secret").notNull(), // For webhook validation
+  endpoint: varchar("endpoint", { length: 255 }).notNull().unique(),
+  secret: text("secret").notNull(),
   status: webhookStatusEnum("status").default("active").notNull(),
   lastTriggered: timestamp("last_triggered"),
   triggerCount: integer("trigger_count").default(0).notNull(),
-  config: json("config"), // Additional webhook configuration
+  config: json("config"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Add index on agentId for faster lookups
+  agentIdIdx: {
+    name: "webhooks_agent_id_idx",
+    columns: [table.agentId],
+  },
+}));
 
 export const webhookLogs = pgTable("webhook_logs", {
-  id: serial("id").primaryKey(),
-  webhookId: integer("webhook_id")
-    .references(() => webhooks.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  webhookId: uuid("webhook_id")
+    .references(() => webhooks.id, { onDelete: 'cascade' })
     .notNull(),
   method: varchar("method", { length: 10 }).notNull(),
   headers: json("headers"),
@@ -56,12 +63,12 @@ export const webhookLogs = pgTable("webhook_logs", {
 });
 
 export const schedules = pgTable("schedules", {
-  id: serial("id").primaryKey(),
-  agentId: integer("agent_id")
-    .references(() => agents.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: uuid("agent_id")
+    .references(() => agents.id, { onDelete: 'cascade' })
     .notNull(),
-  createdBy: integer("created_by")
-    .references(() => users.id)
+  createdBy: uuid("created_by")
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   cronExpression: varchar("cron_expression", { length: 100 }).notNull(),

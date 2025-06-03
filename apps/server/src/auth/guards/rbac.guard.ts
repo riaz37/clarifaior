@@ -1,15 +1,14 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
+  Injectable,
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { eq, and } from 'drizzle-orm';
-import db from 'database/src/db';
-import { workspaceMembers } from 'database/src/db/schema';
-import { Permission, ROLE_PERMISSIONS } from '../rbac/permissions';
-import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
+import { db, workspaceMembers } from '@repo/database';
+import { Permission, ROLE_PERMISSIONS } from '@auth/rbac/permissions';
+import { PERMISSIONS_KEY } from '@auth/decorators/permissions.decorator';
 
 @Injectable()
 export class RbacGuard implements CanActivate {

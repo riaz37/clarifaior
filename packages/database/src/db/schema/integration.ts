@@ -1,14 +1,14 @@
 import {
   pgTable,
-  serial,
   varchar,
   text,
   timestamp,
-  integer,
   json,
   boolean,
   pgEnum,
+  uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { workspaces } from "./workspace";
 import { users } from "./user";
 
@@ -26,14 +26,14 @@ export const integrationTypeEnum = pgEnum("integration_type", [
 ]);
 
 export const integrations = pgTable("integrations", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name", { length: 255 }).notNull(),
   type: integrationTypeEnum("type").notNull(),
-  workspaceId: integer("workspace_id")
-    .references(() => workspaces.id)
+  workspaceId: uuid("workspace_id")
+    .references(() => workspaces.id, { onDelete: 'cascade' })
     .notNull(),
-  createdBy: integer("created_by")
-    .references(() => users.id)
+  createdBy: uuid("created_by")
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   config: json("config").notNull(), // Encrypted configuration
@@ -44,11 +44,11 @@ export const integrations = pgTable("integrations", {
 });
 
 export const integrationCredentials = pgTable("integration_credentials", {
-  id: serial("id").primaryKey(),
-  integrationId: integer("integration_id")
-    .references(() => integrations.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  integrationId: uuid("integration_id")
+    .references(() => integrations.id, { onDelete: 'cascade' })
     .notNull(),
-  userId: integer("user_id")
+  userId: uuid("user_id")
     .references(() => users.id)
     .notNull(),
   encryptedTokens: text("encrypted_tokens").notNull(), // OAuth tokens, API keys

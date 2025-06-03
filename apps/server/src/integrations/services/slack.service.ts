@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { WebClient } from '@slack/web-api';
-import { LoggerService } from '../../common/services/logger.service';
-import { SlackMessageRequest } from '../integration.service';
+import { LoggerService } from '@common/services/logger.service';
+import { SlackMessageRequest, SlackMessageResponse } from '@repo/types';
 
 @Injectable()
 export class SlackService {
@@ -19,7 +19,9 @@ export class SlackService {
     this.client = new WebClient(botToken);
   }
 
-  async sendMessage(request: SlackMessageRequest): Promise<any> {
+  async sendMessage(
+    request: SlackMessageRequest,
+  ): Promise<SlackMessageResponse> {
     if (!this.client) {
       throw new BadRequestException('Slack integration not configured');
     }
@@ -36,28 +38,38 @@ export class SlackService {
       // Clean channel name (remove # if present)
       const cleanChannel = channel.startsWith('#') ? channel.slice(1) : channel;
 
-      const result = await this.client.chat.postMessage({
+      // Prepare message options
+      const messageOptions: any = {
         channel: cleanChannel,
         text: message,
-        // Add thread support if needed
-        ...(threadReply && { thread_ts: threadReply }),
-      });
+        attachments: [],
+        as_user: true,
+      };
+
+      // Add thread_ts if this is a thread reply
+      if (threadReply) {
+        messageOptions.thread_ts = threadReply;
+      }
+
+      const result = await this.client.chat.postMessage(messageOptions);
 
       if (!result.ok) {
         throw new Error(`Slack API error: ${result.error}`);
       }
 
-      this.logger.log(`Slack message sent successfully`, {
+      this.logger.log('Slack message sent successfully', {
         channel: cleanChannel,
         messageId: result.ts,
         messageLength: message.length,
       });
 
+      // Convert timestamp string to number (e.g., '1234567890.123456' -> 1234567890.123456)
+      const timestamp = result.ts ? parseFloat(result.ts) : 0;
       return {
-        messageId: result.ts,
-        timestamp: result.ts,
+        messageId: result.ts || '',
+        timestamp,
         channel: cleanChannel,
-        permalink: result.message?.permalink,
+        permalink: '', // We can't get permalink directly from the response
       };
     } catch (error) {
       this.logger.error(`Slack message failed`, error.stack, {

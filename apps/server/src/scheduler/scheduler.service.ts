@@ -7,11 +7,11 @@ import {
 } from '@nestjs/common';
 import * as cron from 'node-cron';
 import * as moment from 'moment-timezone';
-import { eq, and, lte } from 'drizzle-orm';
-import { schedules, agents } from 'database/src/db/schema';
-import { DatabaseService } from '../common/services/database.service';
-import { LoggerService } from '../common/services/logger.service';
-import { ExecutionService } from '../execution/execution.service';
+import { eq, and } from 'drizzle-orm';
+import { schedules, agents } from '@repo/database';
+import { DatabaseService } from '@common/services/database.service';
+import { LoggerService } from '@common/services/logger.service';
+import { ExecutionService } from '@execution/execution.service';
 
 export interface CreateScheduleDto {
   agentId: number;

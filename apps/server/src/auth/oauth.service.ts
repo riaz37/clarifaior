@@ -5,10 +5,10 @@ import {
 } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import { google } from 'googleapis';
-import { oauthTokens, integrationConnections } from 'database/src/db/schema';
-import { DatabaseService } from '../common/services/database.service';
-import { LoggerService } from '../common/services/logger.service';
-import { EncryptionService } from '../common/services/encryption.service';
+import { oauthTokens, integrationConnections } from '@repo/database';
+import { DatabaseService } from '@common/services/database.service';
+import { LoggerService } from '@common/services/logger.service';
+import { EncryptionService } from '@common/services/encryption.service';
 
 export interface OAuthToken {
   accessToken: string;
@@ -35,8 +35,8 @@ export class OAuthService {
   }
 
   async getGoogleAuthUrl(
-    userId: number,
-    workspaceId: number,
+    userId: string,
+    workspaceId: string,
     state?: string,
   ): Promise<string> {
     const oauth2Client = this.createGoogleOAuthClient();
@@ -65,7 +65,16 @@ export class OAuthService {
     return authUrl;
   }
 
-  async handleGoogleCallback(code: string, state: string): Promise<any> {
+  async handleGoogleCallback(
+    code: string,
+    state: string,
+  ): Promise<{
+    userId: string;
+    workspaceId: string;
+    email: string;
+    name: string;
+    hasRefreshToken: boolean;
+  }> {
     try {
       const stateData = JSON.parse(state);
       const { userId, workspaceId } = stateData;
@@ -78,8 +87,9 @@ export class OAuthService {
       }
 
       // Get user info
-      oauth2Client.setCredentials(tokens);
-      const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+      const oauth2Client2 = new google.auth.OAuth2();
+      oauth2Client2.setCredentials({ access_token: tokens.access_token });
+      const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client2 });
       const userInfo = await oauth2.userinfo.get();
 
       // Store encrypted tokens
@@ -169,16 +179,16 @@ export class OAuthService {
   }
 
   async getValidGoogleToken(
-    userId: number,
-    workspaceId: number,
+    userId: string,
+    workspaceId: string,
   ): Promise<OAuthToken> {
     const [tokenRecord] = await this.databaseService.db
       .select()
       .from(oauthTokens)
       .where(
         and(
-          eq(oauthTokens.userId, userId),
-          eq(oauthTokens.workspaceId, workspaceId),
+          eq(oauthTokens.userId, userId as string),
+          eq(oauthTokens.workspaceId, workspaceId as string),
           eq(oauthTokens.provider, 'google'),
           eq(oauthTokens.isActive, true),
         ),
@@ -219,10 +229,14 @@ export class OAuthService {
   }
 
   async refreshGoogleToken(
-    userId: number,
-    workspaceId: number,
+    userId: string,
+    workspaceId: string,
     refreshToken: string,
   ): Promise<OAuthToken> {
+    // Ensure the refresh token is not empty
+    if (!refreshToken) {
+      throw new Error('No refresh token provided');
+    }
     try {
       const oauth2Client = this.createGoogleOAuthClient();
       oauth2Client.setCredentials({ refresh_token: refreshToken });
@@ -278,7 +292,13 @@ export class OAuthService {
     }
   }
 
-  async revokeGoogleToken(userId: number, workspaceId: number): Promise<void> {
+  async revokeGoogleToken(
+    userId: string,
+    workspaceId: string,
+  ): Promise<void> {
+    if (!userId || !workspaceId) {
+      throw new BadRequestException('User ID and Workspace ID are required');
+    }
     try {
       const tokenRecord = await this.getValidGoogleToken(userId, workspaceId);
 
@@ -324,9 +344,21 @@ export class OAuthService {
   }
 
   async getUserConnections(
-    userId: number,
-    workspaceId: number,
-  ): Promise<any[]> {
+    userId: string,
+    workspaceId: string,
+  ): Promise<Array<{
+    id: string;
+    provider: string;
+    providerAccountId: string;
+    email: string;
+    name?: string;
+    image?: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }>> {
+    if (!userId || !workspaceId) {
+      throw new BadRequestException('User ID and Workspace ID are required');
+    }
     const connections = await this.databaseService.db
       .select()
       .from(integrationConnections)
@@ -343,20 +375,18 @@ export class OAuthService {
       provider: conn.provider,
       connectionName: conn.connectionName,
       config: conn.config,
-      lastUsed: conn.lastUsed?.toISOString(),
-      createdAt: conn.createdAt?.toISOString(),
     }));
   }
 
-  private createGoogleOAuthClient() {
+  private createGoogleOAuthClient(): google.auth.OAuth2 {
     const clientId = process.env.GMAIL_CLIENT_ID;
     const clientSecret = process.env.GMAIL_CLIENT_SECRET;
     const redirectUri =
       process.env.GMAIL_REDIRECT_URI ||
-      `${process.env.WEBHOOK_BASE_URL}/auth/google/callback`;
+      `${process.env.API_URL}/api/auth/google/callback`;
 
     if (!clientId || !clientSecret) {
-      throw new BadRequestException('Google OAuth not configured');
+      throw new Error('Google OAuth client ID or secret not configured');
     }
 
     return new google.auth.OAuth2(clientId, clientSecret, redirectUri);

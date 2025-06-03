@@ -15,11 +15,11 @@ import { SlackService } from './services/slack.service';
 import { GmailService } from './services/gmail.service';
 import { NotionService } from './services/notion.service';
 import { PineconeService } from './services/pinecone.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RequirePermissions } from '../auth/decorators/permissions.decorator';
-import { Permission } from '../auth/rbac/permissions';
-import { ResponseUtil } from '../common/utils/response.util';
-import { LoggerService } from '../common/services/logger.service';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { RequirePermissions } from '@auth/decorators/permissions.decorator';
+import { Permission } from '@auth/rbac/permissions';
+import { ResponseUtil } from '@common/utils/response.util';
+import { LoggerService } from '@common/services/logger.service';
 
 @Controller('integrations')
 @UseGuards(JwtAuthGuard)

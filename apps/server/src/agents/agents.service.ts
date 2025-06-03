@@ -5,11 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { eq, and, desc } from 'drizzle-orm';
-import {
-  agents,
-  agentVersions,
-  workspaceMembers,
-} from 'database/src/db/schema';
+import { agents, agentVersions, workspaceMembers } from '@repo/database';
 import {
   Agent,
   CreateAgentRequest,

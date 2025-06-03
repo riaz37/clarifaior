@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
-import { LoggerService } from '../../common/services/logger.service';
+import { LoggerService } from '@common/services/logger.service';
 import { LLMRequest, LLMResponse } from '../integration.service';
 
 @Injectable()

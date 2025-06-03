@@ -4,12 +4,12 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
-import { agents, flowNodes, flowEdges } from 'database/src/db/schema';
+import { agents, flowNodes, flowEdges } from '@repo/database';
 import { FlowDefinition, FlowNode, FlowEdge } from '@repo/types';
-import { DatabaseService } from '../common/services/database.service';
-import { ValidationService } from '../common/services/validation.service';
-import { LoggerService } from '../common/services/logger.service';
-import { FlowValidationService } from '../agents/services/flow-validation.service';
+import { DatabaseService } from '@common/services/database.service';
+import { ValidationService } from '@common/services/validation.service';
+import { LoggerService } from '@common/services/logger.service';
+import { FlowValidationService } from '@agents/services/flow-validation.service';
 import { UpdateFlowDto } from './dto/update-flow.dto';
 import { CreateNodeDto } from './dto/create-node.dto';
 import { CreateEdgeDto } from './dto/create-edge.dto';

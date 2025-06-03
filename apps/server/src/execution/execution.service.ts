@@ -5,11 +5,11 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import { eq, and, desc } from 'drizzle-orm';
-import { agents, executions, executionLogs } from 'database/src/db/schema';
+import { eq, desc } from 'drizzle-orm';
+import { agents, executions, executionLogs } from '@repo/database';
 import { Execution, ExecutionStatus, PaginationQuery } from '@repo/types';
-import { DatabaseService } from '../common/services/database.service';
-import { LoggerService } from '../common/services/logger.service';
+import { DatabaseService } from '@common/services/database.service';
+import { LoggerService } from '@common/services/logger.service';
 import { StartExecutionDto } from './dto/start-execution.dto';
 
 export interface ExecutionJobData {

@@ -5,10 +5,10 @@ import {
 } from '@nestjs/common';
 import { eq, and, desc } from 'drizzle-orm';
 import * as crypto from 'crypto';
-import { webhooks, webhookLogs, agents } from 'database/src/db/schema';
-import { DatabaseService } from '../common/services/database.service';
-import { LoggerService } from '../common/services/logger.service';
-import { ExecutionService } from '../execution/execution.service';
+import { webhooks, webhookLogs, agents } from '@repo/database';
+import { DatabaseService } from '@common/services/database.service';
+import { LoggerService } from '@common/services/logger.service';
+import { ExecutionService } from '@execution/execution.service';
 
 export interface CreateWebhookDto {
   agentId: number;

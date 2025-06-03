@@ -1,19 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { Pinecone } from '@pinecone-database/pinecone';
-import { LoggerService } from '../../common/services/logger.service';
-import { MemorySearchRequest } from '../integration.service';
-
-export interface EmbeddingRequest {
-  text: string;
-  model?: string;
-}
-
-export interface MemoryDocument {
-  id: string;
-  content: string;
-  metadata?: Record<string, any>;
-  embedding?: number[];
-}
+import { LoggerService } from '@common/services/logger.service';
+import { MemorySearchRequest, MemoryDocument } from '@repo/types';
 
 @Injectable()
 export class PineconeService {
@@ -173,13 +161,13 @@ export class PineconeService {
     try {
       const index = this.pinecone.index(this.indexName);
       const stats = await index.describeIndexStats();
-
       return {
         indexName: this.indexName,
         dimension: stats.dimension,
-        indexFullness: stats.indexFullness,
-        totalVectorCount: stats.totalVectorCount,
+        fullDimension: stats.dimension, // Using the same value as fullDimension is not available
+        totalVectorCount: stats.totalRecordCount || 0, // Using totalRecordCount instead of totalVectorCount
         namespaces: stats.namespaces,
+        totalRecordCount: stats.totalRecordCount || 0,
       };
     } catch (error) {
       this.logger.error(`Failed to get index stats`, error.stack);

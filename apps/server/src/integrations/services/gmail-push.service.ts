@@ -2,28 +2,12 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PubSub } from '@google-cloud/pubsub';
 import { google } from 'googleapis';
 import { eq, and } from 'drizzle-orm';
-import { gmailWatches, agents } from 'database/src/db/schema';
-import { DatabaseService } from '../../common/services/database.service';
-import { LoggerService } from '../../common/services/logger.service';
-import { OAuthService } from '../../auth/oauth.service';
-import { ExecutionService } from '../../execution/execution.service';
-
-export interface GmailWatchRequest {
-  userId: number;
-  workspaceId: number;
-  agentId?: number;
-  labelIds?: string[];
-  query?: string;
-}
-
-export interface GmailPushNotification {
-  message: {
-    data: string;
-    messageId: string;
-    publishTime: string;
-  };
-  subscription: string;
-}
+import { gmailWatches, agents } from '@repo/database';
+import { GmailPushNotification, GmailWatchRequest } from '@repo/types';
+import { DatabaseService } from '@common/services/database.service';
+import { LoggerService } from '@common/services/logger.service';
+import { OAuthService } from '@auth/oauth.service';
+import { ExecutionService } from '@execution/execution.service';
 
 @Injectable()
 export class GmailPushService {
@@ -54,14 +38,19 @@ export class GmailPushService {
     }
   }
 
-  async setupGmailWatch(request: GmailWatchRequest): Promise<any> {
+  async setupGmailWatch(
+    request: GmailWatchRequest,
+  ): Promise<{ historyId: string; expiration: string }> {
     const {
       userId,
       workspaceId,
       agentId,
       labelIds = ['INBOX'],
       query,
-    } = request;
+    } = request as GmailWatchRequest & {
+      labelIds?: string[];
+      query?: string;
+    };
 
     this.logger.log(`Setting up Gmail watch for user: ${userId}`, {
       userId,
@@ -143,12 +132,10 @@ export class GmailPushService {
         expiration: new Date(parseInt(expiration)).toISOString(),
       });
 
+      // Return watch information
       return {
-        watchId: watch.id,
-        emailAddress,
         historyId,
-        expiration: new Date(parseInt(expiration)).toISOString(),
-        topicName: this.topicName,
+        expiration,
       };
     } catch (error) {
       this.logger.error('Failed to setup Gmail watch', error.stack);
@@ -228,7 +215,7 @@ export class GmailPushService {
     }
   }
 
-  async stopGmailWatch(userId: number, workspaceId: number): Promise<void> {
+  async stopGmailWatch(userId: string, workspaceId: string): Promise<void> {
     try {
       // Get OAuth token
       const token = await this.oauthService.getValidGoogleToken(
@@ -268,9 +255,27 @@ export class GmailPushService {
   }
 
   private async getNewMessages(
-    watch: any,
+    watch: {
+      userId: string;
+      workspaceId: string;
+      agentId?: string | null;
+      lastProcessedHistoryId?: string;
+      labelIds?: string[];
+      query?: string;
+    },
     currentHistoryId: string,
-  ): Promise<any[]> {
+  ): Promise<
+    Array<{
+      id: string;
+      threadId: string;
+      labelIds?: string[];
+      payload?: {
+        headers: Array<{ name: string; value: string }>;
+        body: { data?: string };
+      };
+      snippet?: string;
+    }>
+  > {
     try {
       // Get OAuth token
       const token = await this.oauthService.getValidGoogleToken(
@@ -329,7 +334,122 @@ export class GmailPushService {
     }
   }
 
-  private async processNewMessage(watch: any, message: any): Promise<void> {
+  private async processEmailNotification(
+    userId: string,
+    workspaceId: string,
+    agentId?: string,
+    options: {
+      lastProcessedHistoryId?: string;
+      labelIds?: string[];
+      query?: string;
+    } = {},
+  ): Promise<void> {
+    try {
+      // Get OAuth token
+      const token = await this.oauthService.getValidGoogleToken(
+        userId,
+        workspaceId,
+      );
+
+      // Create Gmail client
+      const oauth2Client = new google.auth.OAuth2();
+      oauth2Client.setCredentials({ access_token: token.accessToken });
+      const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+      // Get user profile to get email address
+      const profile = await gmail.users.getProfile({ userId: 'me' });
+      const emailAddress = profile.data.emailAddress;
+
+      if (!emailAddress) {
+        throw new Error('Could not get email address from Gmail profile');
+      }
+
+      // Set up Gmail watch
+      const watchResponse = await gmail.users.watch({
+        userId: 'me',
+        requestBody: {
+          labelIds: options.labelIds,
+          topicName: `projects/${process.env.GOOGLE_CLOUD_PROJECT}/topics/${this.topicName}`,
+          labelFilterAction: 'include',
+        },
+      });
+
+      const { historyId, expiration } = watchResponse.data;
+
+      if (!historyId || !expiration) {
+        throw new Error('Invalid watch response from Gmail API');
+      }
+
+      // Store watch configuration
+      const [watch] = await this.databaseService.db
+        .insert(gmailWatches)
+        .values({
+          userId,
+          workspaceId,
+          agentId,
+          emailAddress,
+          historyId,
+          expiration: new Date(parseInt(expiration)),
+          topicName: `projects/${process.env.GOOGLE_CLOUD_PROJECT}/topics/${this.topicName}`,
+          labelIds: options.labelIds,
+          query: options.query,
+          lastProcessedHistoryId: historyId,
+        })
+        .onConflictDoUpdate({
+          target: [gmailWatches.userId, gmailWatches.workspaceId],
+          set: {
+            agentId,
+            historyId,
+            expiration: new Date(parseInt(expiration)),
+            labelIds: options.labelIds,
+            query: options.query,
+            isActive: true,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+
+      this.logger.log(`Gmail watch setup successful`, {
+        watchId: watch.id,
+        emailAddress,
+        historyId,
+        expiration: new Date(parseInt(expiration)).toISOString(),
+      });
+
+      // Return watch information
+      return {
+        historyId,
+        expiration,
+      };
+    } catch (error) {
+      this.logger.error('Failed to process email notification', error.stack);
+      throw new BadRequestException(
+        `Failed to process email notification: ${error.message}`,
+      );
+    }
+  }
+
+  private async processNewMessage(
+    watch: {
+      id: string;
+      userId: string;
+      workspaceId: string;
+      agentId?: string | null;
+      labelIds?: string[];
+      query?: string;
+      emailAddress?: string;
+    },
+    message: {
+      id: string;
+      threadId: string;
+      labelIds?: string[];
+      payload?: {
+        headers: Array<{ name: string; value: string }>;
+        body: { data?: string };
+      };
+      snippet?: string;
+    },
+  ): Promise<void> {
     try {
       // Parse message data
       const headers = message.payload?.headers || [];
@@ -419,14 +539,24 @@ export class GmailPushService {
     }
   }
 
-  private messageMatchesQuery(message: any, query: string): boolean {
+  private getHeader(
+    name: string,
+    headers: Array<{ name: string; value?: string }>,
+  ): string | undefined {
+    return headers.find((h) => h.name === name)?.value;
+  }
+
+  private messageMatchesQuery(
+    message: { subject?: string; from?: string; to?: string; snippet?: string },
+    query: string,
+  ): boolean {
     // Simple query matching - in production, use Gmail's search syntax
     const searchText =
-      `${message.snippet} ${message.payload?.headers?.map((h: any) => h.value).join(' ')}`.toLowerCase();
+      `${message.snippet} ${message.payload?.headers?.map((h) => h.value).join(' ')}`.toLowerCase();
     return searchText.includes(query.toLowerCase());
   }
 
-  private agentHasGmailTrigger(flowDefinition: any): boolean {
+  private agentHasGmailTrigger(flowDefinition: { triggers?: Array<{ type: string }> }): boolean {
     if (!flowDefinition?.nodes) return false;
     return flowDefinition.nodes.some(
       (node: any) => node.type === 'trigger_gmail',

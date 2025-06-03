@@ -74,6 +74,13 @@ export interface SlackMessageRequest {
   threadReply?: string;
 }
 
+export interface SlackMessageResponse {
+  messageId: string;
+  timestamp: number; // Number representation of Slack timestamp (e.g., 1234567890.123456)
+  channel: string;
+  permalink: string;
+}
+
 // Gmail Integration Types
 export interface EmailRequest {
   to: string;

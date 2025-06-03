@@ -1,14 +1,14 @@
 import {
   pgTable,
-  serial,
   varchar,
   text,
   timestamp,
-  integer,
   boolean,
   json,
   pgEnum,
+  uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { workspaces } from "./workspace";
 import { users } from "./user";
 
@@ -20,14 +20,14 @@ export const agentStatusEnum = pgEnum("agent_status", [
 ]);
 
 export const agents = pgTable("agents", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
-  workspaceId: integer("workspace_id")
-    .references(() => workspaces.id)
+  workspaceId: uuid("workspace_id")
+    .references(() => workspaces.id, { onDelete: 'cascade' })
     .notNull(),
-  createdBy: integer("created_by")
-    .references(() => users.id)
+  createdBy: uuid("created_by")
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   status: agentStatusEnum("status").default("draft").notNull(),
   isPublic: boolean("is_public").default(false).notNull(),
@@ -38,15 +38,33 @@ export const agents = pgTable("agents", {
 });
 
 export const agentVersions = pgTable("agent_versions", {
-  id: serial("id").primaryKey(),
-  agentId: integer("agent_id")
-    .references(() => agents.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: uuid("agent_id")
+    .references(() => agents.id, { onDelete: 'cascade' })
     .notNull(),
   version: varchar("version", { length: 50 }).notNull(),
   flowDefinition: json("flow_definition").notNull(),
   changelog: text("changelog"),
-  createdBy: integer("created_by")
-    .references(() => users.id)
+  createdBy: uuid("created_by")
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  // Add unique constraint on agentId and version
+  agentVersionUnique: unique('agent_version_unique').on(
+    table.agentId,
+    table.version
+  ),
+}));
+
+// Helper function to create unique constraint
+function unique(name: string) {
+  return {
+    name,
+    on: (...columns: any[]) => ({
+      name,
+      columns,
+    }),
+  };
+}

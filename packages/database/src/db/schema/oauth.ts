@@ -1,23 +1,24 @@
 import {
   pgTable,
-  serial,
   varchar,
   text,
   timestamp,
-  integer,
   boolean,
   json,
+  uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { users } from "./user";
 import { workspaces } from "./workspace";
+import { agents } from "./agent";
 
 export const oauthTokens = pgTable("oauth_tokens", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .references(() => users.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
-  workspaceId: integer("workspace_id")
-    .references(() => workspaces.id)
+  workspaceId: uuid("workspace_id")
+    .references(() => workspaces.id, { onDelete: 'cascade' })
     .notNull(),
   provider: varchar("provider", { length: 50 }).notNull(), // 'google', 'slack', 'notion'
   providerAccountId: varchar("provider_account_id", { length: 255 }), // User ID from provider
@@ -30,17 +31,24 @@ export const oauthTokens = pgTable("oauth_tokens", {
   metadata: json("metadata"), // Provider-specific data
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Add unique constraint on provider and providerAccountId
+  providerAccountUnique: unique('provider_account_unique').on(
+    table.provider,
+    table.providerAccountId
+  ),
+}));
 
 export const gmailWatches = pgTable("gmail_watches", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .references(() => users.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
-  workspaceId: integer("workspace_id")
-    .references(() => workspaces.id)
+  workspaceId: uuid("workspace_id")
+    .references(() => workspaces.id, { onDelete: 'cascade' })
     .notNull(),
-  agentId: integer("agent_id"), // Optional: specific agent to trigger
+  agentId: uuid("agent_id") // Optional: specific agent to trigger
+    .references(() => agents.id, { onDelete: 'set null' }),
   emailAddress: varchar("email_address", { length: 255 }).notNull(),
   historyId: varchar("history_id", { length: 255 }).notNull(),
   expiration: timestamp("expiration").notNull(),
@@ -51,15 +59,21 @@ export const gmailWatches = pgTable("gmail_watches", {
   lastProcessedHistoryId: varchar("last_processed_history_id", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Add unique constraint on emailAddress and userId
+  emailUserUnique: unique('email_user_unique').on(
+    table.emailAddress,
+    table.userId
+  ),
+}));
 
 export const integrationConnections = pgTable("integration_connections", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id")
-    .references(() => users.id)
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
-  workspaceId: integer("workspace_id")
-    .references(() => workspaces.id)
+  workspaceId: uuid("workspace_id")
+    .references(() => workspaces.id, { onDelete: 'cascade' })
     .notNull(),
   provider: varchar("provider", { length: 50 }).notNull(),
   connectionName: varchar("connection_name", { length: 255 }).notNull(),
@@ -68,4 +82,22 @@ export const integrationConnections = pgTable("integration_connections", {
   lastUsed: timestamp("last_used"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Add unique constraint on provider and connectionName per workspace
+  providerConnectionUnique: unique('provider_connection_unique').on(
+    table.workspaceId,
+    table.provider,
+    table.connectionName
+  ),
+}));
+
+// Helper function to create unique constraint
+function unique(name: string) {
+  return {
+    name,
+    on: (...columns: any[]) => ({
+      name,
+      columns,
+    }),
+  };
+}

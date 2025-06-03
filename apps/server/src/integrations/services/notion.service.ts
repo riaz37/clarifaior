@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { Client } from '@notionhq/client';
-import { LoggerService } from '../../common/services/logger.service';
-import { NotionPageRequest } from '../integration.service';
+import { LoggerService } from '@common/services/logger.service';
+import { NotionPageRequest } from '@repo/types';
 
 @Injectable()
 export class NotionService {
