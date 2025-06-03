@@ -9,12 +9,8 @@ import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { eq, and, or, isNull } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
-import {
-  users,
-  workspaces,
-  workspaceMembers,
-  refreshTokens,
-} from 'database/src/db/schema';
+import { users, workspaces, workspaceMembers } from 'database/src/db/schema';
+import { refreshTokens } from 'database/src/db/schema/refresh-token';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponse, JwtPayload, RefreshTokenResponse } from '@repo/types';
@@ -67,6 +63,8 @@ export class AuthService {
         email: users.email,
         avatar: users.avatar,
         isEmailVerified: users.isEmailVerified,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
       });
 
     // Create default workspace
@@ -106,6 +104,8 @@ export class AuthService {
     return {
       access_token,
       user: newUser,
+      refresh_token: '',
+      expires_in: '',
     };
   }
 
@@ -150,6 +150,7 @@ export class AuthService {
       .limit(1);
 
     if (user && (await bcrypt.compare(password, user.password))) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...result } = user;
       this.logger.log(`User login successful: ${email}`);
       return result;
@@ -214,13 +215,12 @@ export class AuthService {
 
     const access_token = this.jwtService.sign(payload);
 
-    // Optionally, you can revoke the old refresh token and issue a new one
-    // await this.revokeRefreshToken(refreshToken);
-    // const newRefreshToken = await this.generateRefreshToken(user.id);
+    await this.revokeRefreshToken(refreshToken);
+    const newRefreshToken = await this.generateRefreshToken(user.id);
 
     return {
       access_token,
-      // refresh_token: newRefreshToken.token,
+      refresh_token: newRefreshToken.token,
       expires_in: process.env.JWT_EXPIRES_IN || '7d',
       user: {
         id: user.id,
@@ -228,6 +228,8 @@ export class AuthService {
         email: user.email,
         avatar: user.avatar,
         isEmailVerified: user.isEmailVerified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       },
     };
   }

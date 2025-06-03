@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import db from 'database/src/db';
-import { eq, and, desc, asc, count, sql } from 'drizzle-orm';
+import { eq, desc, asc, count, sql } from 'drizzle-orm';
 import { PaginationQuery, PaginatedResponse } from '@repo/types';
 
 @Injectable()

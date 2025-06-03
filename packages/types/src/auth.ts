@@ -5,12 +5,21 @@ export interface User {
   email: string;
   avatar?: string;
   isEmailVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface AuthResponse {
   access_token: string;
+  refresh_token: string;
+  expires_in: string;
+  user: User;
+}
+
+export interface RefreshTokenResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: string;
   user: User;
 }
 
