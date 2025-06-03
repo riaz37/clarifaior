@@ -11,9 +11,7 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "database/*": ["../../packages/database/dist/*"],
-      "database/src/db": ["../../packages/database/dist/src/db"],
-      "database/src/db/*": ["../../packages/database/dist/src/db/*"]
+      "@repo/*": ["../../packages/*"]
     },
     "incremental": true,
     "skipLibCheck": true,
