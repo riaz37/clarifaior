@@ -25,7 +25,7 @@ export class FlowsService {
     this.logger.setContext('FlowsService');
   }
 
-  async getFlow(agentId: string): Promise<FlowDefinition | null> {
+  async getFlow(agentId: string): Promise<FlowDefinition> {
     this.logger.log(`Fetching flow for agent: ${agentId}`);
 
     // Get agent to verify it exists
@@ -39,8 +39,18 @@ export class FlowsService {
       throw new NotFoundException('Agent not found');
     }
 
-    // Return flow definition from agent record
-    return agent.flowDefinition || null;
+    // Return flow definition from agent record or a default empty flow
+    if (
+      !agent.flowDefinition ||
+      Object.keys(agent.flowDefinition).length === 0
+    ) {
+      return {
+        nodes: [],
+        edges: [],
+      };
+    }
+
+    return agent.flowDefinition;
   }
 
   async updateFlow(
@@ -75,9 +85,10 @@ export class FlowsService {
       };
 
       flowDefinition = {
-        nodes: updateFlowDto.nodes || currentFlow.nodes,
-        edges: updateFlowDto.edges || currentFlow.edges,
-        viewport: updateFlowDto.viewport || currentFlow.viewport,
+        nodes: updateFlowDto.nodes || currentFlow.nodes || [],
+        edges: updateFlowDto.edges || currentFlow.edges || [],
+        viewport: updateFlowDto.viewport ||
+          currentFlow.viewport || { x: 0, y: 0, zoom: 1 },
       };
     }
 

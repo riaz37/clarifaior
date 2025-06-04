@@ -1,6 +1,6 @@
 // Authentication Types
 export interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   avatar?: string;
@@ -35,7 +35,7 @@ export interface RegisterRequest {
 }
 
 export interface JwtPayload {
-  sub: number;
+  sub: string;
   email: string;
   name: string;
   iat?: number;

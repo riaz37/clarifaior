@@ -187,7 +187,13 @@ export class GmailPushService {
       }
 
       // Get new messages since last processed history
-      const newMessages = await this.getNewMessages(watch, historyId);
+      const newMessages = await this.getNewMessages(
+        {
+          ...watch,
+          labelIds: Array.isArray(watch.labelIds) ? watch.labelIds : [],
+        },
+        historyId,
+      );
 
       if (newMessages.length === 0) {
         this.logger.debug(`No new messages found for history: ${historyId}`);
@@ -196,7 +202,13 @@ export class GmailPushService {
 
       // Process each new message
       for (const message of newMessages) {
-        await this.processNewMessage(watch, message);
+        await this.processNewMessage(
+          {
+            ...watch,
+            labelIds: Array.isArray(watch.labelIds) ? watch.labelIds : [],
+          },
+          message,
+        );
       }
 
       // Update last processed history ID

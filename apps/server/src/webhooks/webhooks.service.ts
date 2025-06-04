@@ -54,7 +54,7 @@ export class WebhooksService {
       .values({
         agentId,
         createdBy: userId,
-        name,
+        name: createWebhookDto.name || '',
         endpoint,
         secret,
         config,

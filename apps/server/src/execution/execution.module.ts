@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ExecutionService } from './execution.service';
 import { ExecutionController } from './execution.controller';
@@ -25,7 +25,7 @@ import { IntegrationsModule } from '../integrations/integrations.module';
         },
       },
     }),
-    IntegrationsModule,
+    forwardRef(() => IntegrationsModule),
   ],
   controllers: [ExecutionController],
   providers: [ExecutionService, ExecutionProcessor, NodeExecutorService],

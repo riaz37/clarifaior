@@ -10,6 +10,8 @@ import { db, workspaceMembers } from '@repo/database';
 import { Permission, ROLE_PERMISSIONS } from '@auth/rbac/permissions';
 import { PERMISSIONS_KEY } from '@auth/decorators/permissions.decorator';
 
+type Role = keyof typeof ROLE_PERMISSIONS;
+
 @Injectable()
 export class RbacGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
@@ -49,10 +51,11 @@ export class RbacGuard implements CanActivate {
     }
 
     // Check if user's role has required permissions
-    const userPermissions = ROLE_PERMISSIONS[membership.role] || [];
-    const hasPermission = requiredPermissions.every((permission) =>
-      userPermissions.includes(permission),
-    );
+    const role = membership.role as Role;
+    const userPermissions = ROLE_PERMISSIONS[role] || [];
+    const hasPermission = requiredPermissions.every((permission: Permission) =>
+      (userPermissions as readonly Permission[]).includes(permission),
+    ) as boolean;
 
     if (!hasPermission) {
       throw new ForbiddenException('Insufficient permissions');
@@ -64,7 +67,7 @@ export class RbacGuard implements CanActivate {
     return true;
   }
 
-  private extractWorkspaceId(request: any): number | null {
+  private extractWorkspaceId(request: any): string | null {
     // Try to get workspace ID from different sources
     const workspaceId =
       request.params?.workspaceId ||
@@ -72,6 +75,6 @@ export class RbacGuard implements CanActivate {
       request.body?.workspaceId ||
       request.headers['x-workspace-id'];
 
-    return workspaceId ? parseInt(workspaceId, 10) : null;
+    return workspaceId ? String(workspaceId) : null;
   }
 }

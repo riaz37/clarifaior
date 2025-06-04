@@ -1,9 +1,9 @@
 // Scheduler System Types
 
 export interface Schedule {
-  id: number;
-  agentId: number;
-  createdBy: number;
+  id: string;
+  agentId: string;
+  createdBy: string;
   name: string;
   cronExpression: string;
   timezone: string;
@@ -17,7 +17,7 @@ export interface Schedule {
 }
 
 export interface CreateScheduleRequest {
-  agentId: number;
+  agentId: string;
   name: string;
   cronExpression: string;
   timezone?: string;
@@ -47,7 +47,7 @@ export interface CronPreset {
 }
 
 export interface ScheduleExecution {
-  scheduleId: number;
+  scheduleId: string;
   scheduleName: string;
   cronExpression: string;
   timezone: string;

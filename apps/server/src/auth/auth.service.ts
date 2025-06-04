@@ -164,7 +164,7 @@ export class AuthService {
     return null;
   }
 
-  async validateUserById(userId: number): Promise<any> {
+  async validateUserById(userId: string): Promise<any> {
     const [user] = await this.databaseService.db
       .select({
         id: users.id,
@@ -238,7 +238,7 @@ export class AuthService {
     };
   }
 
-  private async generateRefreshToken(userId: number) {
+  private async generateRefreshToken(userId: string) {
     // Generate a random token
     const token = crypto.randomBytes(40).toString('hex');
     const expiresAt = new Date();
@@ -264,7 +264,7 @@ export class AuthService {
       .where(eq(refreshTokens.token, token));
   }
 
-  async revokeAllUserRefreshTokens(userId: number): Promise<void> {
+  async revokeAllUserRefreshTokens(userId: string): Promise<void> {
     await this.databaseService.db
       .update(refreshTokens)
       .set({ revoked: true })

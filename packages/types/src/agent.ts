@@ -2,11 +2,11 @@
 export type AgentStatus = "draft" | "active" | "paused" | "archived";
 
 export interface Agent {
-  id: number;
+  id: string;
   name: string;
   description?: string;
-  workspaceId: number;
-  createdBy: number;
+  workspaceId: string;
+  createdBy: string;
   status: AgentStatus;
   isPublic: boolean;
   flowDefinition?: FlowDefinition;
@@ -16,19 +16,19 @@ export interface Agent {
 }
 
 export interface AgentVersion {
-  id: number;
-  agentId: number;
+  id: string;
+  agentId: string;
   version: string;
   flowDefinition: FlowDefinition;
   changelog?: string;
-  createdBy: number;
+  createdBy: string;
   createdAt: string;
 }
 
 export interface CreateAgentRequest {
   name: string;
   description?: string;
-  workspaceId: number;
+  workspaceId: string;
 }
 
 export interface UpdateAgentRequest {

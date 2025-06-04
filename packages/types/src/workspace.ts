@@ -2,19 +2,19 @@
 export type WorkspaceRole = "owner" | "admin" | "editor" | "viewer";
 
 export interface Workspace {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   description?: string;
-  ownerId: number;
+  ownerId: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface WorkspaceMember {
-  id: number;
-  workspaceId: number;
-  userId: number;
+  id: string;
+  workspaceId: string;
+  userId: string;
   role: WorkspaceRole;
   invitedAt: string;
   joinedAt?: string;

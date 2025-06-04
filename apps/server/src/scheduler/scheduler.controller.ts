@@ -43,7 +43,7 @@ export class SchedulerController {
     });
 
     const schedule = await this.schedulerService.createSchedule(
-      { ...createScheduleDto, agentId: +agentId },
+      { ...createScheduleDto, agentId: agentId },
       user.id,
     );
 
@@ -53,7 +53,7 @@ export class SchedulerController {
   @Get('agents/:agentId/schedules')
   @RequirePermissions(Permission.AGENT_READ)
   async getSchedules(@Param('agentId') agentId: string) {
-    const schedules = await this.schedulerService.getSchedules(+agentId);
+    const schedules = await this.schedulerService.getSchedules(agentId);
     return ResponseUtil.success(schedules);
   }
 
@@ -66,11 +66,11 @@ export class SchedulerController {
   ) {
     this.logger.log(`Updating schedule: ${scheduleId}`, {
       userId: user.id,
-      scheduleId: +scheduleId,
+      scheduleId: scheduleId,
     });
 
     const schedule = await this.schedulerService.updateSchedule(
-      +scheduleId,
+      scheduleId,
       updates,
       user.id,
     );
@@ -87,10 +87,10 @@ export class SchedulerController {
   ) {
     this.logger.log(`Deleting schedule: ${scheduleId}`, {
       userId: user.id,
-      scheduleId: +scheduleId,
+      scheduleId: scheduleId,
     });
 
-    await this.schedulerService.deleteSchedule(+scheduleId, user.id);
+    await this.schedulerService.deleteSchedule(scheduleId, user.id);
     return ResponseUtil.deleted('Schedule deleted successfully');
   }
 
@@ -101,11 +101,11 @@ export class SchedulerController {
     @Body() body: { isActive: boolean },
   ) {
     this.logger.log(`Toggling schedule: ${scheduleId}`, {
-      scheduleId: +scheduleId,
+      scheduleId: scheduleId,
       isActive: body.isActive,
     });
 
-    await this.schedulerService.toggleSchedule(+scheduleId, body.isActive);
+    await this.schedulerService.toggleSchedule(scheduleId, body.isActive);
     return ResponseUtil.success(
       { isActive: body.isActive },
       `Schedule ${body.isActive ? 'activated' : 'deactivated'} successfully`,

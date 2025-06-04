@@ -5,12 +5,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
-import { AgentsModule } from './agents/agents.module';
-import { FlowsModule } from './flows/flows.module';
-import { ExecutionModule } from './execution/execution.module';
-import { IntegrationsModule } from './integrations/integrations.module';
-import { WebhooksModule } from './webhooks/webhooks.module';
-import { SchedulerModule } from './scheduler/scheduler.module';
+// import { AgentsModule } from './agents/agents.module';
+// import { FlowsModule } from './flows/flows.module';
+// import { ExecutionModule } from './execution/execution.module';
+//import { IntegrationsModule } from './integrations/integrations.module';
+// import { WebhooksModule } from './webhooks/webhooks.module';
+// import { SchedulerModule } from './scheduler/scheduler.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -24,12 +24,12 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     }),
     CommonModule,
     AuthModule,
-    AgentsModule,
-    FlowsModule,
-    ExecutionModule,
-    IntegrationsModule,
-    WebhooksModule,
-    SchedulerModule,
+    // AgentsModule,
+    // FlowsModule,
+    // ExecutionModule,
+    //IntegrationsModule,
+    // WebhooksModule,
+    // SchedulerModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,16 +1,15 @@
 import { Module } from '@nestjs/common';
-import { IntegrationService } from './integration.service';
-import { IntegrationsController } from './integrations.controller';
-import { DeepSeekService } from './services/deepseek.service';
-import { SlackService } from './services/slack.service';
-import { GmailService } from './services/gmail.service';
-import { GmailPushService } from './services/gmail-push.service';
-import { NotionService } from './services/notion.service';
-import { PineconeService } from './services/pinecone.service';
-import { AuthModule } from '../auth/auth.module';
+import { IntegrationService } from '@integrations/integration.service';
+import { IntegrationsController } from '@integrations/integrations.controller';
+import { DeepSeekService } from '@integrations/services/deepseek.service';
+import { SlackService } from '@integrations/services/slack.service';
+import { GmailService } from '@integrations/services/gmail.service';
+import { GmailPushService } from '@integrations/services/gmail-push.service';
+import { NotionService } from '@integrations/services/notion.service';
+import { PineconeService } from '@integrations/services/pinecone.service';
 
 @Module({
-  imports: [AuthModule],
+  imports: [],
   controllers: [IntegrationsController],
   providers: [
     IntegrationService,

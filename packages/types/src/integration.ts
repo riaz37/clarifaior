@@ -12,11 +12,11 @@ export type IntegrationType =
   | "langfuse";
 
 export interface Integration {
-  id: number;
+  id: string;
   name: string;
   type: IntegrationType;
-  workspaceId: number;
-  createdBy: number;
+  workspaceId: string;
+  createdBy: string;
   isActive: boolean;
   config: Record<string, any>;
   metadata?: Record<string, any>;
@@ -26,9 +26,9 @@ export interface Integration {
 }
 
 export interface IntegrationCredentials {
-  id: number;
-  integrationId: number;
-  userId: number;
+  id: string;
+  integrationId: string;
+  userId: string;
   expiresAt?: string;
   createdAt: string;
   updatedAt: string;

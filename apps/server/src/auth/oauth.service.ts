@@ -167,7 +167,8 @@ export class OAuthService {
       });
 
       return {
-        success: true,
+        userId,
+        workspaceId,
         email: userInfo.data.email,
         name: userInfo.data.name,
         hasRefreshToken: !!tokens.refresh_token,
@@ -372,8 +373,12 @@ export class OAuthService {
     return connections.map((conn) => ({
       id: conn.id,
       provider: conn.provider,
-      connectionName: conn.connectionName,
-      config: conn.config,
+      providerAccountId: conn.providerAccountId,
+      email: conn.config?.email,
+      name: conn.config?.name,
+      image: conn.config?.picture,
+      createdAt: conn.createdAt,
+      updatedAt: conn.updatedAt,
     }));
   }
 

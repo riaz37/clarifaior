@@ -15,8 +15,8 @@ export type TriggerType =
   | "api";
 
 export interface Execution {
-  id: number;
-  agentId: number;
+  id: string;
+  agentId: string;
   triggerType: TriggerType;
   triggerData?: Record<string, any>;
   status: ExecutionStatus;
@@ -28,8 +28,8 @@ export interface Execution {
 }
 
 export interface ExecutionLog {
-  id: number;
-  executionId: number;
+  id: string;
+  executionId: string;
   nodeId: string;
   stepNumber: number;
   status: ExecutionStatus;

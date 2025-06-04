@@ -43,12 +43,12 @@ export class OAuthController {
   ) {
     this.logger.log(`Initiating Google OAuth for user: ${user.id}`, {
       userId: user.id,
-      workspaceId: +workspaceId,
+      workspaceId: workspaceId,
     });
 
     const authUrl = await this.oauthService.getGoogleAuthUrl(
       user.id,
-      +workspaceId,
+      workspaceId,
       state,
     );
 
@@ -113,7 +113,7 @@ export class OAuthController {
   ) {
     const connections = await this.oauthService.getUserConnections(
       user.id,
-      +workspaceId,
+      workspaceId,
     );
     return ResponseUtil.success(connections);
   }
@@ -128,10 +128,10 @@ export class OAuthController {
   ) {
     this.logger.log(`Revoking Google token for user: ${user.id}`, {
       userId: user.id,
-      workspaceId: +workspaceId,
+      workspaceId: workspaceId,
     });
 
-    await this.oauthService.revokeGoogleToken(user.id, +workspaceId);
+    await this.oauthService.revokeGoogleToken(user.id, workspaceId);
     return ResponseUtil.deleted('Google connection revoked successfully');
   }
 
@@ -141,8 +141,8 @@ export class OAuthController {
   async setupGmailWatch(
     @Body()
     body: {
-      workspaceId: number;
-      agentId?: number;
+      workspaceId: string;
+      agentId?: string;
       labelIds?: string[];
       query?: string;
     },
@@ -160,6 +160,7 @@ export class OAuthController {
       agentId: body.agentId,
       labelIds: body.labelIds,
       query: body.query,
+      emailAddress: user.email,
     });
 
     return ResponseUtil.created(watch, 'Gmail watch setup successfully');
@@ -175,10 +176,10 @@ export class OAuthController {
   ) {
     this.logger.log(`Stopping Gmail watch for user: ${user.id}`, {
       userId: user.id,
-      workspaceId: +workspaceId,
+      workspaceId: workspaceId,
     });
 
-    await this.gmailPushService.stopGmailWatch(user.id, +workspaceId);
+    await this.gmailPushService.stopGmailWatch(user.id, workspaceId);
     return ResponseUtil.deleted('Gmail watch stopped successfully');
   }
 
@@ -210,7 +211,7 @@ export class OAuthController {
     try {
       const token = await this.oauthService.getValidGoogleToken(
         user.id,
-        +workspaceId,
+        workspaceId,
       );
 
       return ResponseUtil.success({

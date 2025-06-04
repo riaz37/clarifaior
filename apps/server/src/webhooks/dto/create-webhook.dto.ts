@@ -4,6 +4,10 @@ export class CreateWebhookDto {
   @IsString()
   agentId: string;
 
+  @IsString()
+  @IsOptional()
+  name?: string;
+
   @IsObject()
   @IsOptional()
   config?: Record<string, any>;

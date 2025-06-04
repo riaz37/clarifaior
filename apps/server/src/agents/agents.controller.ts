@@ -70,7 +70,7 @@ export class AgentsController {
   @Get(':id')
   @RequirePermissions(Permission.AGENT_READ)
   async findOne(@Param('id') id: string, @CurrentUser() user: any) {
-    const agent = await this.agentsService.findOne(+id, user.id);
+    const agent = await this.agentsService.findOne(id, user.id);
     return ResponseUtil.success(agent);
   }
 
@@ -83,10 +83,10 @@ export class AgentsController {
   ) {
     this.logger.log(`Updating agent ${id}`, {
       userId: user.id,
-      agentId: +id,
+      agentId: id,
     });
 
-    const agent = await this.agentsService.update(+id, updateAgentDto, user.id);
+    const agent = await this.agentsService.update(id, updateAgentDto, user.id);
     return ResponseUtil.updated(agent, 'Agent updated successfully');
   }
 
@@ -96,10 +96,10 @@ export class AgentsController {
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
     this.logger.log(`Deleting agent ${id}`, {
       userId: user.id,
-      agentId: +id,
+      agentId: id,
     });
 
-    await this.agentsService.remove(+id, user.id);
+    await this.agentsService.remove(id, user.id);
     return ResponseUtil.deleted('Agent deleted successfully');
   }
 
@@ -107,9 +107,9 @@ export class AgentsController {
   @RequirePermissions(Permission.AGENT_READ)
   async getVersions(@Param('id') id: string, @CurrentUser() user: any) {
     // Verify access first
-    await this.agentsService.findOne(+id, user.id);
+    await this.agentsService.findOne(id, user.id);
 
-    const versions = await this.agentsService.getVersions(+id);
+    const versions = await this.agentsService.getVersions(id);
     return ResponseUtil.success(versions);
   }
 
@@ -122,7 +122,7 @@ export class AgentsController {
   ) {
     this.logger.log(`Executing agent ${id}`, {
       userId: user.id,
-      agentId: +id,
+      agentId: id,
       testMode: executeDto.testMode,
     });
 
@@ -131,7 +131,7 @@ export class AgentsController {
 
     return ResponseUtil.success({
       message: 'Agent execution started',
-      agentId: +id,
+      agentId: id,
       executionId: Math.floor(Math.random() * 1000000), // Temporary
       status: 'pending',
     });
@@ -140,7 +140,7 @@ export class AgentsController {
   @Post(':id/validate')
   @RequirePermissions(Permission.AGENT_READ)
   async validate(@Param('id') id: string, @CurrentUser() user: any) {
-    const agent = await this.agentsService.findOne(+id, user.id);
+    const agent = await this.agentsService.findOne(id, user.id);
 
     if (!agent.flowDefinition) {
       return ResponseUtil.success({
@@ -155,7 +155,7 @@ export class AgentsController {
     );
 
     this.logger.log(`Flow validation completed for agent ${id}`, {
-      agentId: +id,
+      agentId: id,
       valid: validationResult.valid,
       errorCount: validationResult.errors.length,
       warningCount: validationResult.warnings.length,
@@ -172,7 +172,7 @@ export class AgentsController {
     @CurrentUser() user: any,
     @CurrentWorkspace() workspace: any,
   ) {
-    const originalAgent = await this.agentsService.findOne(+id, user.id);
+    const originalAgent = await this.agentsService.findOne(id, user.id);
 
     const duplicateDto: CreateAgentDto = {
       name: body.name,

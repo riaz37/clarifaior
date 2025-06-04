@@ -3,9 +3,9 @@
 export type WebhookStatus = "active" | "inactive" | "failed";
 
 export interface Webhook {
-  id: number;
-  agentId: number;
-  createdBy: number;
+  id: string;
+  agentId: string;
+  createdBy: string;
   name: string;
   endpoint: string;
   url: string;
@@ -19,8 +19,8 @@ export interface Webhook {
 }
 
 export interface WebhookLog {
-  id: number;
-  webhookId: number;
+  id: string;
+  webhookId: string;
   method: string;
   headers?: Record<string, string>;
   body?: any;
@@ -28,14 +28,14 @@ export interface WebhookLog {
   ipAddress?: string;
   userAgent?: string;
   success: boolean;
-  executionId?: number;
+  executionId?: string;
   error?: string;
   responseTime?: number;
   createdAt: string;
 }
 
 export interface CreateWebhookRequest {
-  agentId: number;
+  agentId: string;
   name: string;
   config?: Record<string, any>;
 }
@@ -56,6 +56,6 @@ export interface WebhookTriggerResponse {
 }
 
 export interface WebhookTestRequest {
-  webhookId: number;
+  webhookId: string;
   testData: any;
 }
