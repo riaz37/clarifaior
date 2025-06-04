@@ -6,12 +6,7 @@ import {
 } from '@nestjs/common';
 import { eq, and, desc } from 'drizzle-orm';
 import { agents, agentVersions, workspaceMembers } from '@repo/database';
-import {
-  Agent,
-  CreateAgentRequest,
-  UpdateAgentRequest,
-  PaginationQuery,
-} from '@repo/types';
+import { Agent, PaginationQuery } from '@repo/types';
 import { DatabaseService } from '../common/services/database.service';
 import { ValidationService } from '../common/services/validation.service';
 import { LoggerService } from '../common/services/logger.service';
@@ -28,7 +23,7 @@ export class AgentsService {
     this.logger.setContext('AgentsService');
   }
 
-  async create(createAgentDto: CreateAgentDto, userId: number): Promise<Agent> {
+  async create(createAgentDto: CreateAgentDto, userId: string): Promise<Agent> {
     const {
       name,
       description,
@@ -91,7 +86,7 @@ export class AgentsService {
   }
 
   async findAll(
-    workspaceId: number,
+    workspaceId: string,
     pagination: PaginationQuery,
   ): Promise<any> {
     this.logger.log(`Fetching agents for workspace: ${workspaceId}`);
@@ -105,15 +100,15 @@ export class AgentsService {
     return this.databaseService.paginate(query, pagination);
   }
 
-  async findOne(id: number, userId: number): Promise<Agent> {
+  async findOne(id: string, userId: string): Promise<Agent> {
     const agent = await this.getAgentWithAccess(id, userId);
     return this.mapToAgentResponse(agent);
   }
 
   async update(
-    id: number,
+    id: string,
     updateAgentDto: UpdateAgentDto,
-    userId: number,
+    userId: string,
   ): Promise<Agent> {
     const agent = await this.getAgentWithAccess(id, userId);
 
@@ -168,8 +163,9 @@ export class AgentsService {
     return this.mapToAgentResponse(updatedAgent);
   }
 
-  async remove(id: number, userId: number): Promise<void> {
-    const agent = await this.getAgentWithAccess(id, userId);
+  async remove(id: string, userId: string): Promise<void> {
+    // Verify agent exists and user has access
+    void (await this.getAgentWithAccess(id, userId));
 
     this.logger.log(`Deleting agent: ${id}`, {
       userId,
@@ -184,7 +180,7 @@ export class AgentsService {
     });
   }
 
-  async getVersions(agentId: number): Promise<any[]> {
+  async getVersions(agentId: string): Promise<any[]> {
     return this.databaseService.db
       .select()
       .from(agentVersions)
@@ -193,11 +189,11 @@ export class AgentsService {
   }
 
   private async createVersion(
-    agentId: number,
+    agentId: string,
     flowDefinition: any,
     version: string,
     changelog: string,
-    userId: number,
+    userId: string,
   ): Promise<void> {
     await this.databaseService.db.insert(agentVersions).values({
       agentId,
@@ -209,8 +205,8 @@ export class AgentsService {
   }
 
   private async getAgentWithAccess(
-    agentId: number,
-    userId: number,
+    agentId: string,
+    userId: string,
   ): Promise<any> {
     const [agent] = await this.databaseService.db
       .select()
@@ -229,8 +225,8 @@ export class AgentsService {
   }
 
   private async verifyWorkspaceAccess(
-    userId: number,
-    workspaceId: number,
+    userId: string,
+    workspaceId: string,
   ): Promise<void> {
     const hasAccess = await this.databaseService.exists(
       workspaceMembers,

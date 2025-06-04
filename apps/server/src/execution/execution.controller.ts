@@ -56,7 +56,7 @@ export class ExecutionController {
   @Get(':id')
   @RequirePermissions(Permission.EXECUTION_READ)
   async getExecution(@Param('id') id: string) {
-    const execution = await this.executionService.getExecution(+id);
+    const execution = await this.executionService.getExecution(id);
     return ResponseUtil.success(execution);
   }
 
@@ -67,7 +67,7 @@ export class ExecutionController {
     @Query() query: PaginationQuery,
   ) {
     const executions = await this.executionService.getExecutions(
-      +agentId,
+      agentId,
       query,
     );
     return ResponseUtil.paginated(executions);
@@ -76,7 +76,7 @@ export class ExecutionController {
   @Get(':id/logs')
   @RequirePermissions(Permission.EXECUTION_READ)
   async getExecutionLogs(@Param('id') id: string) {
-    const logs = await this.executionService.getExecutionLogs(+id);
+    const logs = await this.executionService.getExecutionLogs(id);
     return ResponseUtil.success(logs);
   }
 
@@ -86,10 +86,10 @@ export class ExecutionController {
   async cancelExecution(@Param('id') id: string, @CurrentUser() user: any) {
     this.logger.log(`Cancelling execution: ${id}`, {
       userId: user.id,
-      executionId: +id,
+      executionId: id,
     });
 
-    await this.executionService.cancelExecution(+id, user.id);
+    await this.executionService.cancelExecution(id, user.id);
     return ResponseUtil.success(null, 'Execution cancelled successfully');
   }
 

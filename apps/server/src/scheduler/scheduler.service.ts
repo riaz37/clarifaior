@@ -14,7 +14,7 @@ import { LoggerService } from '@common/services/logger.service';
 import { ExecutionService } from '@execution/execution.service';
 
 export interface CreateScheduleDto {
-  agentId: number;
+  agentId: string;
   name: string;
   cronExpression: string;
   timezone?: string;
@@ -23,7 +23,7 @@ export interface CreateScheduleDto {
 
 @Injectable()
 export class SchedulerService implements OnModuleInit, OnModuleDestroy {
-  private scheduledTasks = new Map<number, cron.ScheduledTask>();
+  private scheduledTasks = new Map<string, cron.ScheduledTask>();
 
   constructor(
     private databaseService: DatabaseService,
@@ -45,7 +45,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
 
   async createSchedule(
     createScheduleDto: CreateScheduleDto,
-    userId: number,
+    userId: string,
   ): Promise<any> {
     const {
       agentId,
@@ -122,7 +122,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  async getSchedules(agentId: number): Promise<any[]> {
+  async getSchedules(agentId: string): Promise<any[]> {
     const scheduleList = await this.databaseService.db
       .select()
       .from(schedules)
@@ -142,9 +142,9 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
   }
 
   async updateSchedule(
-    scheduleId: number,
+    scheduleId: string,
     updates: Partial<CreateScheduleDto>,
-    userId: number,
+    userId: string,
   ): Promise<any> {
     this.logger.log(`Updating schedule: ${scheduleId}`, { userId, scheduleId });
 
@@ -209,7 +209,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  async deleteSchedule(scheduleId: number, userId: number): Promise<void> {
+  async deleteSchedule(scheduleId: string, userId: string): Promise<void> {
     this.logger.log(`Deleting schedule: ${scheduleId}`, { userId, scheduleId });
 
     // Stop the schedule
@@ -225,7 +225,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async toggleSchedule(scheduleId: number, isActive: boolean): Promise<void> {
+  async toggleSchedule(scheduleId: string, isActive: boolean): Promise<void> {
     this.logger.log(`Toggling schedule: ${scheduleId} to ${isActive}`, {
       scheduleId,
       isActive,
@@ -289,7 +289,7 @@ export class SchedulerService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private stopSchedule(scheduleId: number): void {
+  private stopSchedule(scheduleId: string): void {
     const task = this.scheduledTasks.get(scheduleId);
     if (task) {
       task.stop();

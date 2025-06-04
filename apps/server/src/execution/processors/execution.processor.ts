@@ -1,10 +1,15 @@
 import { Processor, Process } from '@nestjs/bull';
 import { Job } from 'bull';
 import { Injectable } from '@nestjs/common';
-import { FlowDefinition, FlowNode, FlowEdge } from '@repo/types';
-import { ExecutionService, ExecutionJobData } from '../execution.service';
-import { NodeExecutorService } from '../services/node-executor.service';
-import { LoggerService } from '../../common/services/logger.service';
+import {
+  FlowDefinition,
+  FlowNode,
+  FlowEdge,
+  ExecutionJobData,
+} from '@repo/types';
+import { ExecutionService } from '@execution/execution.service';
+import { NodeExecutorService } from '@execution/services/node-executor.service';
+import { LoggerService } from '@common/services/logger.service';
 
 @Processor('agent-execution')
 @Injectable()
@@ -79,7 +84,7 @@ export class ExecutionProcessor {
   }
 
   private async executeFlow(
-    executionId: number,
+    executionId: string,
     flowDefinition: FlowDefinition,
     triggerData?: Record<string, any>,
     context?: Record<string, any>,
@@ -108,7 +113,7 @@ export class ExecutionProcessor {
       variables: new Map<string, any>(),
     };
 
-    let stepNumber = 0;
+    const stepNumber = 0;
     const executedNodes = new Set<string>();
     const results = new Map<string, any>();
 
@@ -134,7 +139,7 @@ export class ExecutionProcessor {
   }
 
   private async executeNodeChain(
-    executionId: number,
+    executionId: string,
     currentNode: FlowNode,
     nodeMap: Map<string, FlowNode>,
     edgeMap: Map<string, string[]>,

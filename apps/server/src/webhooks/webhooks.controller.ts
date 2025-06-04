@@ -13,7 +13,7 @@ import {
   All,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { WebhooksService, CreateWebhookDto } from './webhooks.service';
+import { WebhooksService } from './webhooks.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../auth/guards/rbac.guard';
 import { RequirePermissions } from '../auth/decorators/permissions.decorator';
@@ -22,6 +22,7 @@ import { Public } from '../auth/decorators/public.decorator';
 import { Permission } from '../auth/rbac/permissions';
 import { ResponseUtil } from '../common/utils/response.util';
 import { LoggerService } from '../common/services/logger.service';
+import { CreateWebhookDto } from './dto/create-webhook.dto';
 
 @Controller()
 export class WebhooksController {
@@ -44,11 +45,11 @@ export class WebhooksController {
   ) {
     this.logger.log(`Creating webhook for agent: ${agentId}`, {
       userId: user.id,
-      agentId: +agentId,
+      agentId: agentId,
     });
 
     const webhook = await this.webhooksService.createWebhook(
-      { ...createWebhookDto, agentId: +agentId },
+      { ...createWebhookDto, agentId: agentId },
       user.id,
     );
 
@@ -59,7 +60,7 @@ export class WebhooksController {
   @UseGuards(JwtAuthGuard, RbacGuard)
   @RequirePermissions(Permission.AGENT_READ)
   async getWebhooks(@Param('agentId') agentId: string) {
-    const webhooks = await this.webhooksService.getWebhooks(+agentId);
+    const webhooks = await this.webhooksService.getWebhooks(agentId);
     return ResponseUtil.success(webhooks);
   }
 
@@ -67,7 +68,7 @@ export class WebhooksController {
   @UseGuards(JwtAuthGuard, RbacGuard)
   @RequirePermissions(Permission.AGENT_READ)
   async getWebhook(@Param('webhookId') webhookId: string) {
-    const webhook = await this.webhooksService.getWebhook(+webhookId);
+    const webhook = await this.webhooksService.getWebhook(webhookId);
     return ResponseUtil.success(webhook);
   }
 
@@ -84,7 +85,7 @@ export class WebhooksController {
       webhookId: +webhookId,
     });
 
-    await this.webhooksService.deleteWebhook(+webhookId, user.id);
+    await this.webhooksService.deleteWebhook(webhookId, user.id);
     return ResponseUtil.deleted('Webhook deleted successfully');
   }
 
@@ -96,7 +97,7 @@ export class WebhooksController {
     @Query('limit') limit?: string,
   ) {
     const logs = await this.webhooksService.getWebhookLogs(
-      +webhookId,
+      webhookId,
       limit ? +limit : 50,
     );
     return ResponseUtil.success(logs);
@@ -141,7 +142,7 @@ export class WebhooksController {
     @Body() testData: any,
     @Req() req: Request,
   ) {
-    const webhook = await this.webhooksService.getWebhook(+webhookId);
+    const webhook = await this.webhooksService.getWebhook(webhookId);
 
     const triggerData = {
       method: 'POST',

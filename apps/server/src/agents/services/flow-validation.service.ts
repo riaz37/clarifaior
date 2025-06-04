@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FlowDefinition, FlowNode, FlowEdge, NodeType } from '@repo/types';
-import { LoggerService } from '../../common/services/logger.service';
+import { LoggerService } from '@common/services/logger.service';
 
 export interface ValidationResult {
   valid: boolean;

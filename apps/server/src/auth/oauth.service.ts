@@ -292,10 +292,7 @@ export class OAuthService {
     }
   }
 
-  async revokeGoogleToken(
-    userId: string,
-    workspaceId: string,
-  ): Promise<void> {
+  async revokeGoogleToken(userId: string, workspaceId: string): Promise<void> {
     if (!userId || !workspaceId) {
       throw new BadRequestException('User ID and Workspace ID are required');
     }
@@ -346,16 +343,18 @@ export class OAuthService {
   async getUserConnections(
     userId: string,
     workspaceId: string,
-  ): Promise<Array<{
-    id: string;
-    provider: string;
-    providerAccountId: string;
-    email: string;
-    name?: string;
-    image?: string;
-    createdAt: Date;
-    updatedAt: Date;
-  }>> {
+  ): Promise<
+    Array<{
+      id: string;
+      provider: string;
+      providerAccountId: string;
+      email: string;
+      name?: string;
+      image?: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }>
+  > {
     if (!userId || !workspaceId) {
       throw new BadRequestException('User ID and Workspace ID are required');
     }

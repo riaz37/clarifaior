@@ -35,7 +35,7 @@ export class FlowsController {
   @Get()
   @RequirePermissions(Permission.AGENT_READ)
   async getFlow(@Param('agentId') agentId: string, @CurrentUser() user: any) {
-    const flow = await this.flowsService.getFlow(+agentId);
+    const flow = await this.flowsService.getFlow(agentId);
     return ResponseUtil.success(flow);
   }
 
@@ -48,11 +48,11 @@ export class FlowsController {
   ) {
     this.logger.log(`Updating flow for agent ${agentId}`, {
       userId: user.id,
-      agentId: +agentId,
+      agentId: agentId,
     });
 
     const flow = await this.flowsService.updateFlow(
-      +agentId,
+      agentId,
       updateFlowDto,
       user.id,
     );
@@ -69,12 +69,12 @@ export class FlowsController {
   ) {
     this.logger.log(`Adding node to agent ${agentId}`, {
       userId: user.id,
-      agentId: +agentId,
+      agentId: agentId,
       nodeType: createNodeDto.type,
     });
 
     const node = await this.flowsService.addNode(
-      +agentId,
+      agentId,
       createNodeDto,
       user.id,
     );
@@ -91,12 +91,12 @@ export class FlowsController {
   ) {
     this.logger.log(`Updating node ${nodeId} in agent ${agentId}`, {
       userId: user.id,
-      agentId: +agentId,
+      agentId: agentId,
       nodeId,
     });
 
     const node = await this.flowsService.updateNode(
-      +agentId,
+      agentId,
       nodeId,
       updates,
       user.id,
@@ -114,11 +114,11 @@ export class FlowsController {
   ) {
     this.logger.log(`Removing node ${nodeId} from agent ${agentId}`, {
       userId: user.id,
-      agentId: +agentId,
+      agentId: agentId,
       nodeId,
     });
 
-    await this.flowsService.removeNode(+agentId, nodeId, user.id);
+    await this.flowsService.removeNode(agentId, nodeId, user.id);
     return ResponseUtil.deleted('Node removed successfully');
   }
 
@@ -132,13 +132,13 @@ export class FlowsController {
   ) {
     this.logger.log(`Adding edge to agent ${agentId}`, {
       userId: user.id,
-      agentId: +agentId,
+      agentId: agentId,
       source: createEdgeDto.source,
       target: createEdgeDto.target,
     });
 
     const edge = await this.flowsService.addEdge(
-      +agentId,
+      agentId,
       createEdgeDto,
       user.id,
     );
@@ -155,11 +155,11 @@ export class FlowsController {
   ) {
     this.logger.log(`Removing edge ${edgeId} from agent ${agentId}`, {
       userId: user.id,
-      agentId: +agentId,
+      agentId: agentId,
       edgeId,
     });
 
-    await this.flowsService.removeEdge(+agentId, edgeId, user.id);
+    await this.flowsService.removeEdge(agentId, edgeId, user.id);
     return ResponseUtil.deleted('Edge removed successfully');
   }
 
@@ -170,7 +170,7 @@ export class FlowsController {
     @Body() viewport: { x: number; y: number; zoom: number },
     @CurrentUser() user: any,
   ) {
-    await this.flowsService.updateViewport(+agentId, viewport, user.id);
+    await this.flowsService.updateViewport(agentId, viewport, user.id);
     return ResponseUtil.success(viewport, 'Viewport updated successfully');
   }
 
@@ -185,7 +185,7 @@ export class FlowsController {
 
     this.logger.log(`Auto-layout requested for agent ${agentId}`, {
       userId: user.id,
-      agentId: +agentId,
+      agentId,
     });
 
     return ResponseUtil.success({
@@ -200,7 +200,7 @@ export class FlowsController {
     @Body() options: { format: 'json' | 'png' | 'svg' },
     @CurrentUser() user: any,
   ) {
-    const flow = await this.flowsService.getFlow(+agentId);
+    const flow = await this.flowsService.getFlow(agentId);
 
     if (!flow) {
       return ResponseUtil.error('No flow to export');

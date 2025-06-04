@@ -1,10 +1,10 @@
 import { Injectable, LoggerService as NestLoggerService } from '@nestjs/common';
 
 export interface LogContext {
-  userId?: number;
-  workspaceId?: number;
-  agentId?: number;
-  executionId?: number;
+  userId?: string;
+  workspaceId?: string;
+  agentId?: string;
+  executionId?: string;
   requestId?: string;
   [key: string]: any;
 }
@@ -47,7 +47,7 @@ export class LoggerService implements NestLoggerService {
   logExecution(
     level: 'info' | 'error' | 'warn',
     message: string,
-    executionId: number,
+    executionId: string,
     nodeId?: string,
     additionalContext?: any,
   ) {
@@ -78,8 +78,8 @@ export class LoggerService implements NestLoggerService {
     url: string,
     statusCode: number,
     duration: number,
-    userId?: number,
-    workspaceId?: number,
+    userId?: string,
+    workspaceId?: string,
   ) {
     const message = `${method} ${url} ${statusCode} - ${duration}ms`;
     const context: LogContext = {

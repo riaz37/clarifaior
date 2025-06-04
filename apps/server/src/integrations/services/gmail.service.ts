@@ -2,7 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { google } from 'googleapis';
 import { LoggerService } from '@common/services/logger.service';
 import { OAuthService } from '@auth/oauth.service';
-import { EmailRequest } from '../integration.service';
+import { EmailRequest } from '@integrations/interfaces/intgration';
 
 @Injectable()
 export class GmailService {
@@ -21,6 +21,7 @@ export class GmailService {
     const clientId = process.env.GMAIL_CLIENT_ID;
     const clientSecret = process.env.GMAIL_CLIENT_SECRET;
     const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+    const redirecturl = process.env.GMAIL_REDIRECT_URL;
 
     if (!clientId || !clientSecret || !refreshToken) {
       this.logger.warn('Gmail credentials not fully configured');
@@ -30,7 +31,7 @@ export class GmailService {
     this.oauth2Client = new google.auth.OAuth2(
       clientId,
       clientSecret,
-      'http://localhost:3001/auth/gmail/callback', // Redirect URI
+      redirecturl, // Redirect URI
     );
 
     this.oauth2Client.setCredentials({
@@ -42,8 +43,8 @@ export class GmailService {
 
   async sendEmail(
     request: EmailRequest,
-    userId?: number,
-    workspaceId?: number,
+    userId?: string,
+    workspaceId?: string,
   ): Promise<any> {
     // Try OAuth first if user context provided
     let gmail = this.gmail;
@@ -55,11 +56,11 @@ export class GmailService {
           'OAuth Gmail failed, falling back to service account',
           { error: error.message },
         );
-        if (!this.gmail) {
+        if (!gmail) {
           throw new BadRequestException('Gmail integration not configured');
         }
       }
-    } else if (!this.gmail) {
+    } else if (!gmail) {
       throw new BadRequestException('Gmail integration not configured');
     }
 
@@ -323,8 +324,8 @@ export class GmailService {
   }
 
   private async getGmailClientWithOAuth(
-    userId: number,
-    workspaceId: number,
+    userId: string,
+    workspaceId: string,
   ): Promise<any> {
     const token = await this.oauthService.getValidGoogleToken(
       userId,

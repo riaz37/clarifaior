@@ -7,8 +7,8 @@ import {
 } from 'class-validator';
 
 export class StartExecutionDto {
-  @IsNumber()
-  agentId: number;
+  @IsString()
+  agentId: string;
 
   @IsOptional()
   @IsString()

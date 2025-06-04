@@ -55,3 +55,12 @@ export interface ExecutionStats {
   totalTokensUsed: number;
   totalCost: number;
 }
+
+export interface ExecutionJobData {
+  executionId: string;
+  agentId: string;
+  flowDefinition: any;
+  triggerData?: Record<string, any>;
+  context?: Record<string, any>;
+  testMode?: boolean;
+}

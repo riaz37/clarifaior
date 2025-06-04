@@ -3,7 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { agents, flowNodes, flowEdges } from '@repo/database';
 import { FlowDefinition, FlowNode, FlowEdge } from '@repo/types';
 import { DatabaseService } from '@common/services/database.service';
@@ -25,7 +25,7 @@ export class FlowsService {
     this.logger.setContext('FlowsService');
   }
 
-  async getFlow(agentId: number): Promise<FlowDefinition | null> {
+  async getFlow(agentId: string): Promise<FlowDefinition | null> {
     this.logger.log(`Fetching flow for agent: ${agentId}`);
 
     // Get agent to verify it exists
@@ -44,9 +44,9 @@ export class FlowsService {
   }
 
   async updateFlow(
-    agentId: number,
+    agentId: string,
     updateFlowDto: UpdateFlowDto,
-    userId: number,
+    userId: string,
   ): Promise<FlowDefinition> {
     this.logger.log(`Updating flow for agent: ${agentId}`, { userId, agentId });
 
@@ -90,14 +90,13 @@ export class FlowsService {
     }
 
     // Update agent with new flow definition
-    const [updatedAgent] = await this.databaseService.db
+    await this.databaseService.db
       .update(agents)
       .set({
         flowDefinition,
         updatedAt: new Date(),
       })
-      .where(eq(agents.id, agentId))
-      .returning();
+      .where(eq(agents.id, agentId));
 
     // Store individual nodes and edges for querying (optional - for advanced features)
     await this.syncFlowComponents(agentId, flowDefinition);
@@ -113,9 +112,9 @@ export class FlowsService {
   }
 
   async addNode(
-    agentId: number,
+    agentId: string,
     nodeDto: CreateNodeDto,
-    userId: number,
+    userId: string,
   ): Promise<FlowNode> {
     this.logger.log(`Adding node to agent: ${agentId}`, {
       userId,
@@ -156,10 +155,10 @@ export class FlowsService {
   }
 
   async updateNode(
-    agentId: number,
+    agentId: string,
     nodeId: string,
     updates: Partial<FlowNode>,
-    userId: number,
+    userId: string,
   ): Promise<FlowNode> {
     this.logger.log(`Updating node ${nodeId} in agent: ${agentId}`, {
       userId,
@@ -194,9 +193,9 @@ export class FlowsService {
   }
 
   async removeNode(
-    agentId: number,
+    agentId: string,
     nodeId: string,
-    userId: number,
+    userId: string,
   ): Promise<void> {
     this.logger.log(`Removing node ${nodeId} from agent: ${agentId}`, {
       userId,
@@ -226,9 +225,9 @@ export class FlowsService {
   }
 
   async addEdge(
-    agentId: number,
+    agentId: string,
     edgeDto: CreateEdgeDto,
-    userId: number,
+    userId: string,
   ): Promise<FlowEdge> {
     this.logger.log(`Adding edge to agent: ${agentId}`, {
       userId,
@@ -287,9 +286,9 @@ export class FlowsService {
   }
 
   async removeEdge(
-    agentId: number,
+    agentId: string,
     edgeId: string,
-    userId: number,
+    userId: string,
   ): Promise<void> {
     this.logger.log(`Removing edge ${edgeId} from agent: ${agentId}`, {
       userId,
@@ -314,9 +313,9 @@ export class FlowsService {
   }
 
   async updateViewport(
-    agentId: number,
+    agentId: string,
     viewport: { x: number; y: number; zoom: number },
-    userId: number,
+    userId: string,
   ): Promise<void> {
     this.logger.log(`Updating viewport for agent: ${agentId}`, {
       userId,
@@ -344,7 +343,7 @@ export class FlowsService {
   }
 
   private async syncFlowComponents(
-    agentId: number,
+    agentId: string,
     flowDefinition: FlowDefinition,
   ): Promise<void> {
     // This is optional - stores individual nodes/edges in separate tables for advanced querying

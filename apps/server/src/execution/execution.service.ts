@@ -7,19 +7,15 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { eq, desc } from 'drizzle-orm';
 import { agents, executions, executionLogs } from '@repo/database';
-import { Execution, ExecutionStatus, PaginationQuery } from '@repo/types';
+import {
+  Execution,
+  ExecutionStatus,
+  PaginationQuery,
+  ExecutionJobData,
+} from '@repo/types';
 import { DatabaseService } from '@common/services/database.service';
 import { LoggerService } from '@common/services/logger.service';
 import { StartExecutionDto } from './dto/start-execution.dto';
-
-export interface ExecutionJobData {
-  executionId: number;
-  agentId: number;
-  flowDefinition: any;
-  triggerData?: Record<string, any>;
-  context?: Record<string, any>;
-  testMode?: boolean;
-}
 
 @Injectable()
 export class ExecutionService {
@@ -33,7 +29,7 @@ export class ExecutionService {
 
   async startExecution(
     startExecutionDto: StartExecutionDto,
-    userId: number,
+    userId: string,
   ): Promise<Execution> {
     const {
       agentId,
@@ -117,7 +113,7 @@ export class ExecutionService {
     return this.mapToExecutionResponse(execution);
   }
 
-  async getExecution(executionId: number): Promise<Execution> {
+  async getExecution(executionId: string): Promise<Execution> {
     const [execution] = await this.databaseService.db
       .select()
       .from(executions)
@@ -132,7 +128,7 @@ export class ExecutionService {
   }
 
   async getExecutions(
-    agentId: number,
+    agentId: string,
     pagination: PaginationQuery,
   ): Promise<any> {
     this.logger.log(`Fetching executions for agent: ${agentId}`);
@@ -146,7 +142,7 @@ export class ExecutionService {
     return this.databaseService.paginate(query, pagination);
   }
 
-  async getExecutionLogs(executionId: number): Promise<any[]> {
+  async getExecutionLogs(executionId: string): Promise<any[]> {
     const logs = await this.databaseService.db
       .select()
       .from(executionLogs)
@@ -169,7 +165,7 @@ export class ExecutionService {
     }));
   }
 
-  async cancelExecution(executionId: number, userId: number): Promise<void> {
+  async cancelExecution(executionId: string, userId: string): Promise<void> {
     this.logger.log(`Cancelling execution: ${executionId}`, {
       executionId,
       userId,
@@ -195,7 +191,7 @@ export class ExecutionService {
   }
 
   async updateExecutionStatus(
-    executionId: number,
+    executionId: string,
     status: ExecutionStatus,
     error?: string,
   ): Promise<void> {
@@ -230,7 +226,7 @@ export class ExecutionService {
   }
 
   async logExecutionStep(
-    executionId: number,
+    executionId: string,
     nodeId: string,
     stepNumber: number,
     status: ExecutionStatus,

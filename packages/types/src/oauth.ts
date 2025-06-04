@@ -90,7 +90,7 @@ export interface GmailPushNotification {
   message: {
     data: string;
     messageId: string;
-    publishTime: string;
+    publishTime: string | Date;
     attributes?: Record<string, string>;
   };
   subscription: string;

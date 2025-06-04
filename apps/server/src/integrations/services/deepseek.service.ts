@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 import { LoggerService } from '@common/services/logger.service';
-import { LLMRequest, LLMResponse } from '../integration.service';
+import { LLMRequest, LLMResponse } from '@integrations/interfaces/intgration';
 
 @Injectable()
 export class DeepSeekService {

@@ -9,21 +9,8 @@ import { webhooks, webhookLogs, agents } from '@repo/database';
 import { DatabaseService } from '@common/services/database.service';
 import { LoggerService } from '@common/services/logger.service';
 import { ExecutionService } from '@execution/execution.service';
-
-export interface CreateWebhookDto {
-  agentId: number;
-  name: string;
-  config?: Record<string, any>;
-}
-
-export interface WebhookTriggerData {
-  method: string;
-  headers: Record<string, string>;
-  body: any;
-  query: Record<string, any>;
-  ipAddress?: string;
-  userAgent?: string;
-}
+import { CreateWebhookDto } from './dto/create-webhook.dto';
+import { WebhookTriggerData } from './interface/webhook';
 
 @Injectable()
 export class WebhooksService {
@@ -37,9 +24,9 @@ export class WebhooksService {
 
   async createWebhook(
     createWebhookDto: CreateWebhookDto,
-    userId: number,
+    userId: string,
   ): Promise<any> {
-    const { agentId, name, config } = createWebhookDto;
+    const { agentId, config } = createWebhookDto;
 
     this.logger.log(`Creating webhook for agent: ${agentId}`, {
       userId,
@@ -92,7 +79,7 @@ export class WebhooksService {
     };
   }
 
-  async getWebhooks(agentId: number): Promise<any[]> {
+  async getWebhooks(agentId: string): Promise<any[]> {
     const webhookList = await this.databaseService.db
       .select()
       .from(webhooks)
@@ -111,7 +98,7 @@ export class WebhooksService {
     }));
   }
 
-  async getWebhook(webhookId: number): Promise<any> {
+  async getWebhook(webhookId: string): Promise<any> {
     const [webhook] = await this.databaseService.db
       .select()
       .from(webhooks)
@@ -137,7 +124,7 @@ export class WebhooksService {
     };
   }
 
-  async deleteWebhook(webhookId: number, userId: number): Promise<void> {
+  async deleteWebhook(webhookId: string, userId: string): Promise<void> {
     this.logger.log(`Deleting webhook: ${webhookId}`, { userId, webhookId });
 
     const result = await this.databaseService.db
@@ -155,7 +142,7 @@ export class WebhooksService {
     triggerData: WebhookTriggerData,
   ): Promise<any> {
     const startTime = Date.now();
-    let executionId: number | undefined;
+    let executionId: string | undefined;
     let success = false;
     let error: string | undefined;
 
@@ -209,17 +196,16 @@ export class WebhooksService {
               body: triggerData.body,
               query: triggerData.query,
             },
-          },
-          context: {
-            webhookId: webhook.id,
-            ipAddress: triggerData.ipAddress,
-            userAgent: triggerData.userAgent,
+            request: {
+              ipAddress: triggerData.ipAddress,
+              userAgent: triggerData.userAgent,
+            },
           },
         },
-        webhook.createdBy,
+        webhook.createdBy.toString(),
       );
 
-      executionId = execution.id;
+      executionId = String(execution.id);
       success = true;
 
       // Update webhook stats
@@ -227,7 +213,7 @@ export class WebhooksService {
         .update(webhooks)
         .set({
           lastTriggered: new Date(),
-          triggerCount: webhook.triggerCount + 1,
+          triggerCount: (webhook.triggerCount || 0) + 1,
         })
         .where(eq(webhooks.id, webhook.id));
 
@@ -250,7 +236,7 @@ export class WebhooksService {
         endpoint,
         triggerData,
         success,
-        executionId,
+        executionId?.toString(),
         error,
         Date.now() - startTime,
       );
@@ -261,7 +247,7 @@ export class WebhooksService {
     endpoint: string,
     triggerData: WebhookTriggerData,
     success: boolean,
-    executionId?: number,
+    executionId?: string,
     error?: string,
     responseTime?: number,
   ): Promise<void> {
@@ -292,7 +278,7 @@ export class WebhooksService {
     }
   }
 
-  async getWebhookLogs(webhookId: number, limit: number = 50): Promise<any[]> {
+  async getWebhookLogs(webhookId: string, limit: number = 50): Promise<any[]> {
     const logs = await this.databaseService.db
       .select()
       .from(webhookLogs)

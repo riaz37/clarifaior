@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsNumber,
   IsBoolean,
   ValidateNested,
 } from 'class-validator';
@@ -16,8 +15,8 @@ export class CreateAgentDto {
   @IsString()
   description?: string;
 
-  @IsNumber()
-  workspaceId: number;
+  @IsString()
+  workspaceId: string;
 
   @IsOptional()
   @IsBoolean()

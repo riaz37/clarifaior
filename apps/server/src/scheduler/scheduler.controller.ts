@@ -11,12 +11,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { SchedulerService, CreateScheduleDto } from './scheduler.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RbacGuard } from '../auth/guards/rbac.guard';
-import { RequirePermissions } from '../auth/decorators/permissions.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Permission } from '../auth/rbac/permissions';
-import { ResponseUtil } from '../common/utils/response.util';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { RbacGuard } from '@auth/guards/rbac.guard';
+import { RequirePermissions } from '@auth/decorators/permissions.decorator';
+import { CurrentUser } from '@auth/decorators/current-user.decorator';
+import { Permission } from '@auth/rbac/permissions';
+import { ResponseUtil } from '@common/utils/response.util';
 import { LoggerService } from '../common/services/logger.service';
 
 @Controller()
@@ -39,7 +39,7 @@ export class SchedulerController {
   ) {
     this.logger.log(`Creating schedule for agent: ${agentId}`, {
       userId: user.id,
-      agentId: +agentId,
+      agentId: agentId,
     });
 
     const schedule = await this.schedulerService.createSchedule(

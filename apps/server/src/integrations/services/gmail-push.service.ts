@@ -289,12 +289,18 @@ export class GmailPushService {
       const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
       // Get history since last processed
-      const historyResponse = await gmail.users.history.list({
+      const params: any = {
         userId: 'me',
-        startHistoryId: watch.lastProcessedHistoryId,
-        labelId: watch.labelIds,
+        startHistoryId: currentHistoryId || watch.lastProcessedHistoryId,
         historyTypes: ['messageAdded'],
-      });
+      };
+
+      // If we have label IDs, use the first one (Gmail API only supports one labelId at a time)
+      if (watch.labelIds && watch.labelIds.length > 0) {
+        params.labelId = watch.labelIds[0];
+      }
+
+      const historyResponse = await gmail.users.history.list(params);
 
       const history = historyResponse.data.history || [];
       const newMessages: any[] = [];
@@ -343,7 +349,7 @@ export class GmailPushService {
       labelIds?: string[];
       query?: string;
     } = {},
-  ): Promise<void> {
+  ): Promise<{ historyId: string; expiration: string }> {
     try {
       // Get OAuth token
       const token = await this.oauthService.getValidGoogleToken(
@@ -547,7 +553,15 @@ export class GmailPushService {
   }
 
   private messageMatchesQuery(
-    message: { subject?: string; from?: string; to?: string; snippet?: string },
+    message: {
+      subject?: string;
+      from?: string;
+      to?: string;
+      snippet?: string;
+      payload?: {
+        headers?: Array<{ name?: string; value?: string }>;
+      };
+    },
     query: string,
   ): boolean {
     // Simple query matching - in production, use Gmail's search syntax
@@ -556,11 +570,12 @@ export class GmailPushService {
     return searchText.includes(query.toLowerCase());
   }
 
-  private agentHasGmailTrigger(flowDefinition: { triggers?: Array<{ type: string }> }): boolean {
+  private agentHasGmailTrigger(flowDefinition: {
+    triggers?: Array<{ type: string }>;
+    nodes?: Array<{ type: string }>;
+  }): boolean {
     if (!flowDefinition?.nodes) return false;
-    return flowDefinition.nodes.some(
-      (node: any) => node.type === 'trigger_gmail',
-    );
+    return flowDefinition.nodes.some((node) => node.type === 'trigger_gmail');
   }
 
   private async initializePubSub(): Promise<void> {
@@ -585,6 +600,9 @@ export class GmailPushService {
               publishTime: message.publishTime,
             },
             subscription: subscription.name,
+            data: message.data.toString(),
+            messageId: message.id,
+            publishTime: message.publishTime.toISOString(),
           };
 
           this.handlePushNotification(notification);
