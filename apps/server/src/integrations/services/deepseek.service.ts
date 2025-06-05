@@ -1,12 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
 import { LoggerService } from '@common/services/logger.service';
-import { LLMRequest, LLMResponse } from '@integrations/interfaces/intgration';
+import { LLMRequest, LLMResponse } from '@integrations/interfaces/integration';
 
 @Injectable()
 export class DeepSeekService {
   private readonly apiKey: string;
-  private readonly baseUrl = 'https://api.deepseek.com/v1';
+  private readonly baseUrl = 'https://api.deepseek.com';
 
   constructor(private logger: LoggerService) {
     this.logger.setContext('DeepSeekService');

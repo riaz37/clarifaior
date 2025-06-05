@@ -9,6 +9,16 @@ import {
   ValidationPipe,
   BadRequestException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiBearerAuth,
+  ApiUnauthorizedResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiBadRequestResponse,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -17,10 +27,33 @@ import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { AuthResponse } from '@repo/types';
 
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiCreatedResponse({
+    description: 'User successfully registered',
+    schema: {
+      type: 'object',
+      properties: {
+        accessToken: { type: 'string' },
+        refreshToken: { type: 'string' },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            email: { type: 'string' },
+            isEmailVerified: { type: 'boolean' },
+          },
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: RegisterDto })
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -30,6 +63,28 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
+  @ApiOperation({ summary: 'User login' })
+  @ApiOkResponse({
+    description: 'User successfully logged in',
+    schema: {
+      type: 'object',
+      properties: {
+        accessToken: { type: 'string' },
+        refreshToken: { type: 'string' },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+            email: { type: 'string' },
+            isEmailVerified: { type: 'boolean' },
+          },
+        },
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
+  @ApiBody({ type: LoginDto })
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -37,6 +92,10 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiOkResponse({ description: 'Returns the current user profile' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getProfile(@CurrentUser() user: any) {

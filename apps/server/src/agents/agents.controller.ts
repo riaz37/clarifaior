@@ -11,23 +11,45 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { AgentsService } from './agents.service';
-import { FlowValidationService } from './services/flow-validation.service';
-import { CreateAgentDto } from './dto/create-agent.dto';
-import { UpdateAgentDto } from './dto/update-agent.dto';
-import { ExecuteAgentDto } from './dto/execute-agent.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RbacGuard } from '../auth/guards/rbac.guard';
-import { RequirePermissions } from '../auth/decorators/permissions.decorator';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { CurrentWorkspace } from '../auth/decorators/workspace.decorator';
-import { Permission } from '../auth/rbac/permissions';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiBody,
+  ApiQuery,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiBadRequestResponse,
+} from '@nestjs/swagger';
+import { AgentsService } from '@agents/agents.service';
+import { FlowValidationService } from '@agents/services/flow-validation.service';
+import { CreateAgentDto } from '@agents/dto/create-agent.dto';
+import { UpdateAgentDto } from '@agents/dto/update-agent.dto';
+import { ExecuteAgentDto } from '@agents/dto/execute-agent.dto';
+import {
+  AgentResponseDto,
+  AgentListResponseDto,
+} from './dto/agent-response.dto';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { RbacGuard } from '@auth/guards/rbac.guard';
+import { RequirePermissions } from '@auth/decorators/permissions.decorator';
+import { CurrentUser } from '@auth/decorators/current-user.decorator';
+import { CurrentWorkspace } from '@auth/decorators/workspace.decorator';
+import { Permission } from '@auth/rbac/permissions';
 import { PaginationQuery } from '@repo/types';
-import { ResponseUtil } from '../common/utils/response.util';
-import { LoggerService } from '../common/services/logger.service';
+import { ResponseUtil } from '@common/utils/response.util';
+import { LoggerService } from '@common/services/logger.service';
 
+@ApiTags('Agents')
+@ApiBearerAuth('access-token')
 @Controller('workspaces/:workspaceId/agents')
 @UseGuards(JwtAuthGuard, RbacGuard)
+@ApiResponse({ status: 401, description: 'Unauthorized' })
+@ApiResponse({ status: 403, description: 'Forbidden' })
 export class AgentsController {
   constructor(
     private readonly agentsService: AgentsService,
@@ -38,6 +60,17 @@ export class AgentsController {
   }
 
   @Post()
+  @ApiOperation({
+    summary: 'Create a new agent',
+    description: 'Creates a new agent in the specified workspace',
+  })
+  @ApiParam({ name: 'workspaceId', description: 'Workspace ID' })
+  @ApiBody({ type: CreateAgentDto })
+  @ApiCreatedResponse({
+    description: 'Agent created successfully',
+    type: AgentResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid input data' })
   @RequirePermissions(Permission.AGENT_CREATE)
   @HttpCode(HttpStatus.CREATED)
   async create(
@@ -58,6 +91,27 @@ export class AgentsController {
   }
 
   @Get()
+  @ApiOperation({
+    summary: 'List all agents',
+    description: 'Retrieves a paginated list of agents in the workspace',
+  })
+  @ApiParam({ name: 'workspaceId', description: 'Workspace ID' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page',
+  })
+  @ApiOkResponse({
+    description: 'List of agents',
+    type: AgentListResponseDto,
+  })
   @RequirePermissions(Permission.AGENT_READ)
   async findAll(
     @Query() query: PaginationQuery,
@@ -68,6 +122,17 @@ export class AgentsController {
   }
 
   @Get(':id')
+  @ApiOperation({
+    summary: 'Get agent by ID',
+    description: 'Retrieves a specific agent by its ID',
+  })
+  @ApiParam({ name: 'workspaceId', description: 'Workspace ID' })
+  @ApiParam({ name: 'id', description: 'Agent ID' })
+  @ApiOkResponse({
+    description: 'Agent details',
+    type: AgentResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Agent not found' })
   @RequirePermissions(Permission.AGENT_READ)
   async findOne(@Param('id') id: string, @CurrentUser() user: any) {
     const agent = await this.agentsService.findOne(id, user.id);
@@ -75,6 +140,19 @@ export class AgentsController {
   }
 
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Update agent',
+    description: 'Updates an existing agent',
+  })
+  @ApiParam({ name: 'workspaceId', description: 'Workspace ID' })
+  @ApiParam({ name: 'id', description: 'Agent ID' })
+  @ApiBody({ type: UpdateAgentDto })
+  @ApiOkResponse({
+    description: 'Agent updated successfully',
+    type: AgentResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Agent not found' })
+  @ApiBadRequestResponse({ description: 'Invalid input data' })
   @RequirePermissions(Permission.AGENT_UPDATE)
   async update(
     @Param('id') id: string,
@@ -91,6 +169,14 @@ export class AgentsController {
   }
 
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete agent',
+    description: 'Deletes an agent by ID',
+  })
+  @ApiParam({ name: 'workspaceId', description: 'Workspace ID' })
+  @ApiParam({ name: 'id', description: 'Agent ID' })
+  @ApiNoContentResponse({ description: 'Agent deleted successfully' })
+  @ApiNotFoundResponse({ description: 'Agent not found' })
   @RequirePermissions(Permission.AGENT_DELETE)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string, @CurrentUser() user: any) {
@@ -180,6 +266,7 @@ export class AgentsController {
       workspaceId: workspace.id,
       flowDefinition: originalAgent.flowDefinition,
       metadata: originalAgent.metadata,
+      isPublic: originalAgent.isPublic,
     };
 
     const duplicatedAgent = await this.agentsService.create(

@@ -5,10 +5,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
-// import { AgentsModule } from './agents/agents.module';
+import { AgentsModule } from './agents/agents.module';
 // import { FlowsModule } from './flows/flows.module';
 // import { ExecutionModule } from './execution/execution.module';
-//import { IntegrationsModule } from './integrations/integrations.module';
+import { IntegrationsModule } from './integrations/integrations.module';
 // import { WebhooksModule } from './webhooks/webhooks.module';
 // import { SchedulerModule } from './scheduler/scheduler.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
@@ -24,10 +24,10 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     }),
     CommonModule,
     AuthModule,
-    // AgentsModule,
+    AgentsModule,
     // FlowsModule,
     // ExecutionModule,
-    //IntegrationsModule,
+    IntegrationsModule,
     // WebhooksModule,
     // SchedulerModule,
   ],

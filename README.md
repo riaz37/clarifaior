@@ -28,14 +28,242 @@ A no-code IDE for building AI agents that automate workflows using natural langu
 ## 📦 Project Structure
 
 ```
-.
+clarifaior/
 ├── apps/
-│   └── server/          # NestJS backend application
+│   ├── web/                          # Next.js 15 Frontend Application
+│   │   ├── src/
+│   │   │   ├── app/                  # App Router
+│   │   │   │   ├── (auth)/           # Auth group routes
+│   │   │   │   │   ├── login/
+│   │   │   │   │   ├── register/
+│   │   │   │   │   └── reset-password/
+│   │   │   │   ├── (dashboard)/      # Protected dashboard routes
+│   │   │   │   │   ├── workflows/
+│   │   │   │   │   ├── agents/
+│   │   │   │   │   ├── integrations/
+│   │   │   │   │   ├── analytics/
+│   │   │   │   │   ├── settings/
+│   │   │   │   │   └── billing/
+│   │   │   │   ├── (public)/         # Public pages
+│   │   │   │   │   ├── pricing/
+│   │   │   │   │   ├── docs/
+│   │   │   │   │   └── blog/
+│   │   │   │   ├── api/              # API routes for Next.js
+│   │   │   │   │   ├── auth/
+│   │   │   │   │   ├── webhooks/
+│   │   │   │   │   └── integrations/
+│   │   │   │   └── globals.css
+│   │   │   ├── components/           # React components
+│   │   │   │   ├── ui/              # Shadcn/ui components
+│   │   │   │   ├── forms/           # Form components
+│   │   │   │   ├── workflow/        # Workflow builder components
+│   │   │   │   ├── agents/          # Agent builder components
+│   │   │   │   ├── chat/            # Natural language interface
+│   │   │   │   ├── analytics/       # Dashboard & analytics
+│   │   │   │   └── layout/          # Layout components
+│   │   │   ├── lib/                 # Utility functions
+│   │   │   │   ├── auth.ts
+│   │   │   │   ├── api.ts
+│   │   │   │   ├── utils.ts
+│   │   │   │   └── validations.ts
+│   │   │   ├── hooks/               # Custom React hooks
+│   │   │   ├── store/               # Zustand/Redux store
+│   │   │   └── types/               # TypeScript definitions
+│   │   ├── public/
+│   │   ├── tailwind.config.js
+│   │   └── next.config.js
+│   │
+│   ├── server/                       # NestJS Backend (Enhanced)
+│   │   ├── src/
+│   │   │   ├── main.ts
+│   │   │   ├── app.module.ts
+│   │   │   ├── modules/
+│   │   │   │   ├── auth/            # Authentication & Authorization
+│   │   │   │   │   ├── auth.module.ts
+│   │   │   │   │   ├── auth.service.ts
+│   │   │   │   │   ├── auth.controller.ts
+│   │   │   │   │   ├── guards/
+│   │   │   │   │   ├── strategies/  # JWT, OAuth strategies
+│   │   │   │   │   └── decorators/
+│   │   │   │   ├── users/           # User management
+│   │   │   │   ├── workspaces/      # Multi-tenant workspaces
+│   │   │   │   ├── workflows/       # Workflow management
+│   │   │   │   │   ├── workflow.service.ts
+│   │   │   │   │   ├── workflow.controller.ts
+│   │   │   │   │   ├── workflow-executor.service.ts
+│   │   │   │   │   └── dto/
+│   │   │   │   ├── agents/          # AI Agent management
+│   │   │   │   │   ├── agent.service.ts
+│   │   │   │   │   ├── agent-runner.service.ts
+│   │   │   │   │   └── nlp/         # Natural language processing
+│   │   │   │   ├── integrations/    # Third-party integrations
+│   │   │   │   │   ├── base/        # Base integration classes
+│   │   │   │   │   ├── slack/
+│   │   │   │   │   ├── gmail/
+│   │   │   │   │   ├── notion/
+│   │   │   │   │   ├── discord/
+│   │   │   │   │   ├── trello/
+│   │   │   │   │   ├── shopify/
+│   │   │   │   │   └── webhooks/
+│   │   │   │   ├── triggers/        # Event triggers
+│   │   │   │   │   ├── scheduler/
+│   │   │   │   │   ├── webhook/
+│   │   │   │   │   ├── email/
+│   │   │   │   │   └── api-polling/
+│   │   │   │   ├── billing/         # Subscription & billing
+│   │   │   │   │   ├── billing.service.ts
+│   │   │   │   │   ├── stripe.service.ts
+│   │   │   │   │   └── usage-tracking.service.ts
+│   │   │   │   ├── analytics/       # Usage analytics
+│   │   │   │   ├── notifications/   # In-app notifications
+│   │   │   │   ├── audit/          # Audit logging
+│   │   │   │   └── health/         # Health checks
+│   │   │   ├── common/
+│   │   │   │   ├── decorators/
+│   │   │   │   ├── filters/        # Exception filters
+│   │   │   │   ├── guards/         # Authorization guards
+│   │   │   │   ├── interceptors/   # Request/response interceptors
+│   │   │   │   ├── pipes/          # Validation pipes
+│   │   │   │   └── middleware/     # Custom middleware
+│   │   │   ├── config/
+│   │   │   │   ├── database.config.ts
+│   │   │   │   ├── redis.config.ts
+│   │   │   │   ├── auth.config.ts
+│   │   │   │   └── app.config.ts
+│   │   │   └── types/              # Shared TypeScript types
+│   │   ├── test/                   # E2E tests
+│   │   └── Dockerfile
+│   │
+│   ├── mobile/                      # React Native App (Future)
+│   │   ├── src/
+│   │   ├── android/
+│   │   ├── ios/
+│   │   └── package.json
+│   │
+│   └── docs/                        # Documentation site (Docusaurus/Nextra)
+│       ├── docs/
+│       ├── blog/
+│       └── src/
+│
 ├── packages/
-│   ├── database/       # Database schema and migrations
-│   └── ui/              # Shared UI components library
-├── package.json          # Root package.json with workspace config
-└── pnpm-workspace.yaml   # pnpm workspace configuration
+│   ├── database/                    # Enhanced Database Package
+│   │   ├── src/
+│   │   │   ├── schema/             # Drizzle schema definitions
+│   │   │   │   ├── users.ts
+│   │   │   │   ├── workspaces.ts
+│   │   │   │   ├── workflows.ts
+│   │   │   │   ├── agents.ts
+│   │   │   │   ├── integrations.ts
+│   │   │   │   ├── executions.ts
+│   │   │   │   ├── billing.ts
+│   │   │   │   ├── audit-logs.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── migrations/         # Database migrations
+│   │   │   ├── seeds/              # Seed data
+│   │   │   └── utils/              # Database utilities
+│   │   ├── drizzle.config.ts
+│   │   └── package.json
+│   │
+│   ├── ui/                         # Shared UI Component Library
+│   │   ├── src/
+│   │   │   ├── components/         # Reusable components
+│   │   │   │   ├── forms/
+│   │   │   │   ├── data-display/
+│   │   │   │   ├── feedback/
+│   │   │   │   ├── navigation/
+│   │   │   │   └── layout/
+│   │   │   ├── hooks/              # Shared hooks
+│   │   │   ├── utils/              # Utility functions
+│   │   │   └── styles/             # Shared styles
+│   │   ├── tailwind.config.js
+│   │   └── package.json
+│   │
+│   ├── shared/                     # Shared utilities and types
+│   │   ├── src/
+│   │   │   ├── types/              # Shared TypeScript types
+│   │   │   │   ├── workflow.ts
+│   │   │   │   ├── agent.ts
+│   │   │   │   ├── integration.ts
+│   │   │   │   └── user.ts
+│   │   │   ├── constants/          # Shared constants
+│   │   │   ├── utils/              # Shared utility functions
+│   │   │   └── validators/         # Shared validation schemas
+│   │   └── package.json
+│   │
+│   ├── integrations/               # Integration SDK
+│   │   ├── src/
+│   │   │   ├── base/              # Base integration classes
+│   │   │   ├── providers/         # Integration providers
+│   │   │   └── types/             # Integration types
+│   │   └── package.json
+│   │
+│   ├── ai/                        # AI/LLM Package with LangGraph
+│   │   ├── src/
+│   │   │   ├── providers/         # LLM providers (OpenAI, Anthropic, etc.)
+│   │   │   ├── agents/            # LangGraph Agent definitions
+│   │   │   │   ├── workflow-designer.agent.ts
+│   │   │   │   ├── intent-parser.agent.ts
+│   │   │   │   ├── integration-mapper.agent.ts
+│   │   │   │   ├── validator.agent.ts
+│   │   │   │   └── execution-planner.agent.ts
+│   │   │   ├── graphs/            # LangGraph workflow definitions
+│   │   │   │   ├── workflow-creation.graph.ts
+│   │   │   │   ├── execution.graph.ts
+│   │   │   │   ├── debugging.graph.ts
+│   │   │   │   └── optimization.graph.ts
+│   │   │   ├── state/             # LangGraph state management
+│   │   │   │   ├── workflow-state.ts
+│   │   │   │   ├── conversation-state.ts
+│   │   │   │   └── execution-state.ts
+│   │   │   ├── tools/             # LangChain tools for agents
+│   │   │   │   ├── integration-tools.ts
+│   │   │   │   ├── validation-tools.ts
+│   │   │   │   └── execution-tools.ts
+│   │   │   ├── parsers/           # NLP parsers for workflow creation
+│   │   │   ├── templates/         # Prompt templates
+│   │   │   ├── memory/            # LangChain memory implementations
+│   │   │   │   ├── conversation-memory.ts
+│   │   │   │   ├── workflow-memory.ts
+│   │   │   │   └── user-memory.ts
+│   │   │   └── orchestrator/      # Main LangGraph orchestrator
+│   │   │       ├── workflow-orchestrator.ts
+│   │   │       └── agent-router.ts
+│   │   └── package.json
+│   │
+│   └── config/                    # Shared configurations
+│       ├── eslint/
+│       ├── typescript/
+│       ├── tailwind/
+│       └── jest/
+│
+├── tools/                         # Development tools
+│   ├── scripts/                   # Build and deployment scripts
+│   ├── docker/                    # Docker configurations
+│   │   ├── Dockerfile.web
+│   │   ├── Dockerfile.server
+│   │   └── docker-compose.yml
+│   └── k8s/                      # Kubernetes manifests
+│
+├── .github/                      # GitHub workflows
+│   ├── workflows/
+│   │   ├── ci.yml
+│   │   ├── cd.yml
+│   │   ├── security.yml
+│   │   └── release.yml
+│   └── ISSUE_TEMPLATE/
+│
+├── docs/                         # Project documentation
+│   ├── architecture/
+│   ├── api/
+│   ├── deployment/
+│   └── contributing/
+│
+├── turbo.json                    # Turborepo configuration
+├── package.json                  # Root package.json
+├── pnpm-workspace.yaml          # pnpm workspace config
+├── .env.example                 # Environment variables template
+└── README.md
+
 ```
 
 ## 🚀 Getting Started

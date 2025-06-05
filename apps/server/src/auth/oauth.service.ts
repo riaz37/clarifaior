@@ -373,10 +373,10 @@ export class OAuthService {
     return connections.map((conn) => ({
       id: conn.id,
       provider: conn.provider,
-      providerAccountId: conn.providerAccountId,
-      email: conn.config?.email,
-      name: conn.config?.name,
-      image: conn.config?.picture,
+      providerAccountId: conn.connectionName,
+      email: (conn.config as { email: string }).email,
+      name: (conn.config as { name: string }).name,
+      image: (conn.config as { image: string }).image,
       createdAt: conn.createdAt,
       updatedAt: conn.updatedAt,
     }));

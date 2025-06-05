@@ -2,7 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { google } from 'googleapis';
 import { LoggerService } from '@common/services/logger.service';
 import { OAuthService } from '@auth/oauth.service';
-import { EmailRequest } from '@integrations/interfaces/intgration';
+import { EmailRequest } from '@integrations/interfaces/integration';
 
 @Injectable()
 export class GmailService {
