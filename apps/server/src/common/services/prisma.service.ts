@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { ConfigService } from './config.service';
+import { PrismaClient } from '@repo/database';
 
 @Injectable()
 export class PrismaService
@@ -33,11 +33,5 @@ export class PrismaService
 
   async onModuleDestroy() {
     await this.$disconnect();
-  }
-
-  async enableShutdownHooks(app: any) {
-    this.$on('beforeExit', async () => {
-      await app.close();
-    });
   }
 }

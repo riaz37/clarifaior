@@ -13,40 +13,51 @@ import { PrismaService } from '../common/services/prisma.service';
 import { ValidationService } from '../common/services/validation.service';
 import { LoggerService } from '../common/services/logger.service';
 
-import { AuthResponse, JwtPayload, RefreshTokenResponse } from '@repo/types';
+import {
+  AuthResponse,
+  JwtPayload,
+  RefreshTokenResponse,
+  UserPreferences,
+} from '@repo/types';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { EmailService } from '@common/services/email.service';
 
 @Injectable()
 export class AuthService {
-  private readonly JWT_ACCESS_SECRET: string;
-  private readonly JWT_REFRESH_SECRET: string;
-  private readonly JWT_EXPIRES_IN: number;
-  private readonly JWT_REFRESH_EXPIRES_IN: number;
-
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly validationService: ValidationService,
     private readonly prisma: PrismaService,
     private readonly logger: LoggerService,
+    private readonly emailService: EmailService,
   ) {
-    this.JWT_ACCESS_SECRET = this.configService.jwtSecret;
-    this.JWT_REFRESH_SECRET = this.configService.refreshSecret;
-
-    this.JWT_EXPIRES_IN =
-      typeof this.configService.jwtExpiresIn === 'number'
-        ? this.configService.jwtExpiresIn
-        : 900; // Default to 15 minutes
-
-    this.JWT_REFRESH_EXPIRES_IN =
-      typeof this.configService.refreshExpiresIn === 'number'
-        ? this.configService.refreshExpiresIn
-        : 86400; // Default to 1 day
-
     this.logger.setContext('AuthService');
+  }
+
+  private getJwtExpiresIn(): number {
+    return typeof this.configService.jwtExpiresIn === 'number'
+      ? this.configService.jwtExpiresIn
+      : 900;
+  }
+
+  private mapUserToResponse(user: any) {
+    return {
+      id: user.id,
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      avatar: user.avatar,
+      email_verified: user.email_verified,
+      role: user.role,
+      is_active: user.is_active,
+      preferences: user.preferences as unknown as UserPreferences,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+    };
   }
 
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
@@ -65,6 +76,11 @@ export class AuthService {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date();
+    verificationExpires.setHours(verificationExpires.getHours() + 24); // 24 hours expiry
+
     // Create user and workspace in a transaction
     const result = await this.prisma.$transaction(async (prisma) => {
       // Create user
@@ -80,6 +96,9 @@ export class AuthService {
           preferences: {},
         },
       });
+
+      // Send verification email
+      await this.emailService.sendVerificationEmail(email, verificationToken);
 
       // Create workspace
       const workspace = await prisma.workspace.create({
@@ -132,7 +151,7 @@ export class AuthService {
       email_verified: user.email_verified,
       role: user.role,
       is_active: user.is_active,
-      preferences: user.preferences,
+      preferences: user.preferences as unknown as UserPreferences,
       created_at: user.created_at,
       updated_at: user.updated_at,
     };
@@ -140,7 +159,7 @@ export class AuthService {
     return {
       access_token: tokens.accessToken,
       refresh_token: tokens.refreshToken,
-      expires_in: this.JWT_EXPIRES_IN,
+      expires_in: this.getJwtExpiresIn(),
       user: userResponse,
     };
   }
@@ -207,24 +226,12 @@ export class AuthService {
     await this.storeRefreshToken(user.id, tokens.refreshToken);
 
     // Map user to response format
-    const userResponse = {
-      id: user.id,
-      email: user.email,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      avatar: user.avatar,
-      email_verified: user.email_verified,
-      role: user.role,
-      is_active: user.is_active,
-      preferences: user.preferences,
-      created_at: user.created_at,
-      updated_at: user.updated_at,
-    };
+    const userResponse = this.mapUserToResponse(user);
 
     return {
       access_token: tokens.accessToken,
       refresh_token: tokens.refreshToken,
-      expires_in: this.JWT_EXPIRES_IN,
+      expires_in: this.getJwtExpiresIn(),
       user: userResponse,
     };
   }
@@ -260,12 +267,18 @@ export class AuthService {
   }> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.JWT_ACCESS_SECRET,
-        expiresIn: this.JWT_EXPIRES_IN,
+        secret: this.configService.jwtSecret,
+        expiresIn:
+          typeof this.configService.jwtExpiresIn === 'number'
+            ? this.configService.jwtExpiresIn
+            : 900,
       }),
       this.jwtService.signAsync(payload, {
-        secret: this.JWT_REFRESH_SECRET,
-        expiresIn: this.JWT_REFRESH_EXPIRES_IN,
+        secret: this.configService.refreshSecret,
+        expiresIn:
+          typeof this.configService.refreshExpiresIn === 'number'
+            ? this.configService.refreshExpiresIn
+            : 86400,
       }),
     ]);
 
@@ -277,7 +290,11 @@ export class AuthService {
     token: string,
   ): Promise<void> {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    const expiresAt = new Date(Date.now() + this.JWT_REFRESH_EXPIRES_IN * 1000);
+    const refreshExpiresIn =
+      typeof this.configService.refreshExpiresIn === 'number'
+        ? this.configService.refreshExpiresIn
+        : 86400;
+    const expiresAt = new Date(Date.now() + refreshExpiresIn * 1000);
 
     await this.prisma.refreshToken.create({
       data: {
@@ -315,7 +332,7 @@ export class AuthService {
     // In a real app, you would send an email here
     const resetUrl = `${this.configService.get('FRONTEND_URL')}/reset-password?token=${resetToken}`;
     this.logger.log(`Password reset link: ${resetUrl}`);
-    // TODO: Send email with reset link
+    await this.emailService.sendVerificationEmail(user.email, resetToken);
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
@@ -359,7 +376,7 @@ export class AuthService {
     try {
       // Verify refresh token
       const payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: this.JWT_REFRESH_SECRET,
+        secret: this.configService.refreshSecret,
       });
 
       // Hash the token
@@ -390,7 +407,7 @@ export class AuthService {
     try {
       // Verify the refresh token
       const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
-        secret: this.JWT_REFRESH_SECRET,
+        secret: this.configService.refreshSecret,
       });
 
       // Hash the token to match how it's stored
@@ -445,7 +462,7 @@ export class AuthService {
       return {
         access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,
-        expires_in: this.JWT_EXPIRES_IN,
+        expires_in: this.getJwtExpiresIn(),
       };
     } catch (error) {
       this.logger.error('Error refreshing token', error);

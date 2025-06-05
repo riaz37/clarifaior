@@ -1,47 +1,25 @@
 {
   "name": "@repo/database",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.0",
+  "private": true,
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./src/index.d.ts",
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "migrate": "npx prisma migrate dev",
+    "build": "tsup src/index.ts --format cjs,esm",
     "generate": "npx prisma generate",
     "push": "npx prisma db push",
-    "studio": "npx prisma studio"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js",
-      "default": "./dist/src/index.js"
-    }
+    "migrate": "npx prisma migrate deploy",
+    "studio": "npx prisma studio",
+    "reset": "npx prisma migrate reset --force"
   },
   "dependencies": {
-    "@prisma/client": "^6.9.0",
-    "dotenv": "^16.5.0",
-    "drizzle-orm": "^0.43.1",
-    "pg": "^8.16.0"
-  },
-  "engines": {
-    "node": ">=16.0.0"
+    "@prisma/client": "^6.8.2",
+    "dotenv-cli": "^8.0.0",
+    "prisma": "^6.8.2"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
-    "@types/node": "^22.15.18",
-    "@types/pg": "^8.15.2",
-    "drizzle-kit": "^0.31.1",
-    "ts-node": "^10.9.1",
-    "tsx": "^4.19.4"
+    "tsup": "^8.0.2",
+    "typescript": "5.8.2"
   }
 }

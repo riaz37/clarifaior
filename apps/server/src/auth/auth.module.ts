@@ -8,6 +8,7 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
+import { EmailService } from '../common/services/email.service';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { RefreshTokenGuard } from './guards/refresh-token.guard';
     RefreshTokenStrategy,
     RefreshTokenGuard,
     ConfigService,
+    EmailService,
   ],
   exports: [AuthService, JwtModule],
 })

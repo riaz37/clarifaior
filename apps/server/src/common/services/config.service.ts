@@ -32,4 +32,32 @@ export class ConfigService {
   get refreshExpiresIn(): string | number {
     return this.get<string | number>('JWT_REFRESH_EXPIRES_IN', '7d');
   }
+
+  get smtpHost(): string {
+    return this.get('SMTP_HOST');
+  }
+
+  get smtpPort(): number {
+    return parseInt(this.get('SMTP_PORT') || '587', 10);
+  }
+
+  get smtpUser(): string {
+    return this.get('SMTP_USER');
+  }
+
+  get smtpPass(): string {
+    return this.get('SMTP_PASS');
+  }
+
+  get smtpFromEmail(): string {
+    return this.get('SMTP_FROM_EMAIL');
+  }
+
+  get smtpFromName(): string {
+    return this.get('SMTP_FROM_NAME');
+  }
+
+  get frontendUrl(): string {
+    return this.get('FRONTEND_URL');
+  }
 }
