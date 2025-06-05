@@ -8,48 +8,85 @@ import {
   numeric,
   uuid,
   integer,
+  jsonb,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
-import { agents } from "./agent";
+import { workflows } from "./workflow";
+import { workspaces } from "./workspace";
+import { users } from "./user";
 
-export const executionStatusEnum = pgEnum("execution_status", [
-  "pending",
-  "running",
-  "completed",
-  "failed",
-  "cancelled",
-]);
-
-export const executions = pgTable("executions", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  agentId: uuid("agent_id")
-    .references(() => agents.id, { onDelete: 'cascade' })
+export const workflowExecutions = pgTable("workflow_executions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  workflowId: uuid("workflow_id")
+    .references(() => workflows.id)
     .notNull(),
-  triggerType: varchar("trigger_type", { length: 100 }).notNull(),
-  triggerData: json("trigger_data"), // Data that triggered the execution
-  status: executionStatusEnum("status").default("pending").notNull(),
-  startedAt: timestamp("started_at"),
-  completedAt: timestamp("completed_at"),
-  error: text("error"),
-  metadata: json("metadata"), // Additional execution context
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const executionLogs = pgTable("execution_logs", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  executionId: uuid("execution_id")
-    .references(() => executions.id, { onDelete: 'cascade' })
+  workspaceId: uuid("workspace_id")
+    .references(() => workspaces.id)
     .notNull(),
-  nodeId: varchar("node_id", { length: 100 }).notNull(),
-  stepNumber: integer("step_number").notNull(),
-  status: executionStatusEnum("status").notNull(),
-  input: json("input"),
-  output: json("output"),
-  error: text("error"),
-  duration: integer("duration"), // milliseconds
-  tokensUsed: integer("tokens_used"),
-  cost: numeric("cost", { precision: 10, scale: 6 }), // USD cost
+  triggeredBy: uuid("triggered_by").references(() => users.id),
+
+  status: varchar("status", { length: 50 }).notNull(), // running, completed, failed, cancelled, timeout
+
+  // Execution context
+  input: jsonb("input"), // Initial trigger data
+  output: jsonb("output"), // Final execution result
+  context: jsonb("context").$type<{
+    variables: Record<string, any>;
+    metadata: Record<string, any>;
+    parentExecutionId?: string;
+  }>(),
+
+  // Timing
   startedAt: timestamp("started_at").defaultNow().notNull(),
   completedAt: timestamp("completed_at"),
+  duration: varchar("duration", { length: 20 }), // in milliseconds
+
+  // Error handling
+  error: jsonb("error").$type<{
+    message: string;
+    code: string;
+    stack?: string;
+    nodeId?: string;
+  }>(),
+
+  // Resource usage
+  resourceUsage: jsonb("resource_usage").$type<{
+    apiCalls: number;
+    tokensUsed: number;
+    executionTime: number;
+    memoryUsed: number;
+  }>(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const executionSteps = pgTable("execution_steps", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  executionId: uuid("execution_id")
+    .references(() => workflowExecutions.id)
+    .notNull(),
+  nodeId: varchar("node_id", { length: 255 }).notNull(),
+  stepNumber: varchar("step_number", { length: 10 }).notNull(),
+
+  status: varchar("status", { length: 50 }).notNull(), // pending, running, completed, failed, skipped
+
+  input: jsonb("input"),
+  output: jsonb("output"),
+
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+  duration: varchar("duration", { length: 20 }),
+
+  error: jsonb("error").$type<{
+    message: string;
+    code: string;
+    retryCount: number;
+  }>(),
+
+  metadata: jsonb("metadata").$type<{
+    integrationUsed?: string;
+    apiEndpoint?: string;
+    retryAttempts?: number;
+  }>(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });

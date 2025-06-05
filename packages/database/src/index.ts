@@ -1,14 +1,15 @@
-// Export all schema files
+// Core schemas
 export * from "./db/schema/agent";
+export * from "./db/schema/audit-logs";
+export * from "./db/schema/billing";
 export * from "./db/schema/execution";
-export * from "./db/schema/flow";
 export * from "./db/schema/integration";
-export * from "./db/schema/oauth";
-export * from "./db/schema/refresh-token";
+export * from "./db/schema/notification";
 
+export * from "./db/schema/relation";
 export * from "./db/schema/user";
-export * from "./db/schema/webhook";
+export * from "./db/schema/workflow";
 export * from "./db/schema/workspace";
 
-// Export the database instance
+// Database instance and types
 export { default as db } from "./db";

@@ -7,6 +7,7 @@ import {
   json,
   pgEnum,
   uuid,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { workspaces } from "./workspace";
@@ -20,51 +21,56 @@ export const agentStatusEnum = pgEnum("agent_status", [
 ]);
 
 export const agents = pgTable("agents", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
+  id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id")
-    .references(() => workspaces.id, { onDelete: 'cascade' })
+    .references(() => workspaces.id)
     .notNull(),
   createdBy: uuid("created_by")
-    .references(() => users.id, { onDelete: 'cascade' })
+    .references(() => users.id)
     .notNull(),
-  status: agentStatusEnum("status").default("draft").notNull(),
-  isPublic: boolean("is_public").default(false).notNull(),
-  flowDefinition: json("flow_definition"), // React Flow JSON
-  metadata: json("metadata"), // Additional configuration
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  type: varchar("type", { length: 50 }).notNull(), // workflow-designer, intent-parser, integration-mapper, etc.
+
+  // Agent Configuration
+  config: jsonb("config").$type<{
+    model: string; // gpt-4, claude-3, etc.
+    temperature: number;
+    maxTokens: number;
+    systemPrompt: string;
+    tools: string[];
+    memory: {
+      type: "conversation" | "workflow" | "user";
+      maxMessages: number;
+    };
+  }>(),
+
+  // LangGraph specific
+  graphDefinition: jsonb("graph_definition").$type<{
+    nodes: Array<{
+      id: string;
+      type: string;
+      config: any;
+    }>;
+    edges: Array<{
+      source: string;
+      target: string;
+      condition?: string;
+    }>;
+    state: any;
+  }>(),
+
+  status: varchar("status", { length: 50 }).default("active"), // active, inactive, training
+  version: varchar("version", { length: 20 }).default("1.0.0"),
+
+  // Performance metrics
+  metrics: jsonb("metrics").$type<{
+    totalInteractions: number;
+    successRate: number;
+    avgResponseTime: number;
+    lastTrainedAt: string;
+  }>(),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
-
-export const agentVersions = pgTable("agent_versions", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  agentId: uuid("agent_id")
-    .references(() => agents.id, { onDelete: 'cascade' })
-    .notNull(),
-  version: varchar("version", { length: 50 }).notNull(),
-  flowDefinition: json("flow_definition").notNull(),
-  changelog: text("changelog"),
-  createdBy: uuid("created_by")
-    .references(() => users.id, { onDelete: 'cascade' })
-    .notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-}, (table) => ({
-  // Add unique constraint on agentId and version
-  agentVersionUnique: unique('agent_version_unique').on(
-    table.agentId,
-    table.version
-  ),
-}));
-
-// Helper function to create unique constraint
-function unique(name: string) {
-  return {
-    name,
-    on: (...columns: any[]) => ({
-      name,
-      columns,
-    }),
-  };
-}
