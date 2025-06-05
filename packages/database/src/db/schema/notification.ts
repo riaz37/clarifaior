@@ -14,10 +14,13 @@ import { workspaces } from "./workspace";
 
 export const notifications = pgTable("notifications", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .references(() => users.id)
+  user_id: uuid("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
-  workspaceId: uuid("workspace_id").references(() => workspaces.id),
+  workspace_id: uuid("workspace_id").references(
+    () => workspaces.id,
+    { onDelete: 'cascade' }
+  ),
 
   type: varchar("type", { length: 50 }).notNull(), // workflow_failed, integration_error, etc.
   title: varchar("title", { length: 255 }).notNull(),
@@ -25,16 +28,16 @@ export const notifications = pgTable("notifications", {
 
   // Notification context
   context: jsonb("context").$type<{
-    workflowId?: string;
-    executionId?: string;
-    integrationId?: string;
-    actionUrl?: string;
+    workflow_id?: string;
+    execution_id?: string;
+    integration_id?: string;
+    action_url?: string;
   }>(),
 
   priority: varchar("priority", { length: 20 }).default("normal"), // low, normal, high, urgent
 
-  isRead: boolean("is_read").default(false),
-  readAt: timestamp("read_at"),
+  is_read: boolean("is_read").default(false),
+  read_at: timestamp("read_at"),
 
   // Delivery channels
   channels: jsonb("channels").$type<{
@@ -44,5 +47,5 @@ export const notifications = pgTable("notifications", {
     webhook: boolean;
   }>(),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
 });

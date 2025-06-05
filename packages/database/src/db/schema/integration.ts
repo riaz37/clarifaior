@@ -15,11 +15,11 @@ import { users } from "./user";
 
 export const integrations = pgTable("integrations", {
   id: uuid("id").primaryKey().defaultRandom(),
-  workspaceId: uuid("workspace_id")
-    .references(() => workspaces.id)
+  workspace_id: uuid("workspace_id")
+    .references(() => workspaces.id, { onDelete: 'cascade' })
     .notNull(),
-  userId: uuid("user_id")
-    .references(() => users.id)
+  user_id: uuid("user_id")
+    .references(() => users.id, { onDelete: 'set null' })
     .notNull(),
 
   provider: varchar("provider", { length: 100 }).notNull(), // slack, gmail, notion, etc.
@@ -28,37 +28,38 @@ export const integrations = pgTable("integrations", {
   // OAuth/API credentials (encrypted)
   credentials: jsonb("credentials").$type<{
     type: "oauth" | "api_key" | "webhook";
-    accessToken?: string;
-    refreshToken?: string;
-    apiKey?: string;
-    webhookUrl?: string;
-    expiresAt?: string;
+    access_token?: string;
+    refresh_token?: string;
+    api_key?: string;
+    webhook_url?: string;
+    expires_at?: string;
     scopes?: string[];
   }>(),
 
   // Integration configuration
   config: jsonb("config").$type<{
-    baseUrl?: string;
+    base_url?: string;
     version?: string;
-    rateLimits?: {
+    rate_limits?: {
       requests: number;
       window: number;
     };
-    webhookSecret?: string;
+    webhook_secret?: string;
   }>(),
 
   status: varchar("status", { length: 50 }).default("active"), // active, error, expired, revoked
-  lastSync: timestamp("last_sync"),
+  last_sync: timestamp("last_sync"),
   lastError: text("last_error"),
 
   // Usage tracking
-  usageStats: jsonb("usage_stats").$type<{
-    totalRequests: number;
-    successfulRequests: number;
-    lastUsed: string;
-    monthlyUsage: number;
+  usage_stats: jsonb("usage_stats").$type<{
+    total_requests: number;
+    successful_requests: number;
+    last_used: string;
+    monthly_usage: number;
   }>(),
+  is_active: boolean("is_active").default(true),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
 });

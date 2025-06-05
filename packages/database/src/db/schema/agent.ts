@@ -22,11 +22,11 @@ export const agentStatusEnum = pgEnum("agent_status", [
 
 export const agents = pgTable("agents", {
   id: uuid("id").primaryKey().defaultRandom(),
-  workspaceId: uuid("workspace_id")
-    .references(() => workspaces.id)
+  workspace_id: uuid("workspace_id")
+    .references(() => workspaces.id, { onDelete: 'cascade' })
     .notNull(),
-  createdBy: uuid("created_by")
-    .references(() => users.id)
+  created_by: uuid("created_by")
+    .references(() => users.id, { onDelete: 'set null' })
     .notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
@@ -36,17 +36,17 @@ export const agents = pgTable("agents", {
   config: jsonb("config").$type<{
     model: string; // gpt-4, claude-3, etc.
     temperature: number;
-    maxTokens: number;
-    systemPrompt: string;
+    max_tokens: number;
+    system_prompt: string;
     tools: string[];
     memory: {
       type: "conversation" | "workflow" | "user";
-      maxMessages: number;
+      max_messages: number;
     };
   }>(),
 
   // LangGraph specific
-  graphDefinition: jsonb("graph_definition").$type<{
+  graph_definition: jsonb("graph_definition").$type<{
     nodes: Array<{
       id: string;
       type: string;

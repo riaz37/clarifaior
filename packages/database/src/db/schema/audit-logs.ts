@@ -15,10 +15,11 @@ import { users } from "./user";
 
 export const auditLogs = pgTable("audit_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
-  workspaceId: uuid("workspace_id")
-    .references(() => workspaces.id)
+  workspace_id: uuid("workspace_id")
+    .references(() => workspaces.id, { onDelete: 'cascade' })
     .notNull(),
-  userId: uuid("user_id").references(() => users.id),
+  user_id: uuid("user_id")
+    .references(() => users.id, { onDelete: 'set null' }),
 
   action: varchar("action", { length: 100 }).notNull(), // workflow.created, integration.connected, etc.
   resourceType: varchar("resource_type", { length: 50 }).notNull(), // workflow, integration, user, etc.
@@ -28,11 +29,12 @@ export const auditLogs = pgTable("audit_logs", {
   details: jsonb("details").$type<{
     changes?: Record<string, { old: any; new: any }>;
     metadata?: Record<string, any>;
-    userAgent?: string;
-    ipAddress?: string;
   }>(),
+  metadata: jsonb("metadata"),
+  ip_address: varchar("ip_address", { length: 45 }),
+  user_agent: text("user_agent"),
 
-  severity: varchar("severity", { length: 20 }).default("info"), // info, warning, error, critical
+  severity: varchar("severity", { length: 20 }).default("info"), 
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
 });

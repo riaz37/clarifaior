@@ -1,15 +1,16 @@
 import {
   pgTable,
+  pgEnum,
   varchar,
   text,
-  timestamp,
-  pgEnum,
   uuid,
-  jsonb,
   boolean,
+  timestamp,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { users } from "./user";
+import { unique as createUnique } from "./utils";
 
 export const workspaceRoleEnum = pgEnum("workspace_role", [
   "owner",
@@ -23,53 +24,40 @@ export const workspaces = pgTable("workspaces", {
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   description: text("description"),
   logo: text("logo"),
-  ownerId: uuid("owner_id")
-    .references(() => users.id)
+  owner_id: uuid("owner_id")
+    .references(() => users.id, { onDelete: 'set null' })
     .notNull(),
   plan: varchar("plan", { length: 50 }).default("free"), // free, pro, enterprise
   settings: jsonb("settings").$type<{
-    allowInvites: boolean;
-    defaultRole: string;
-    maxWorkflows: number;
-    maxExecutions: number;
+    allow_invites: boolean;
+    default_role: string;
+    max_workflows: number;
+    max_executions: number;
   }>(),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  is_active: boolean("is_active").default(true),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const workspaceMembers = pgTable(
+export const workspace_members = pgTable(
   "workspace_members",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    workspaceId: uuid("workspace_id")
-      .references(() => workspaces.id)
+    workspace_id: uuid("workspace_id")
+      .references(() => workspaces.id, { onDelete: 'cascade' })
       .notNull(),
-    userId: uuid("user_id")
-      .references(() => users.id)
+    user_id: uuid("user_id")
+      .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
-    role: workspaceRoleEnum("role").default("viewer"),
-    permissions: jsonb("permissions").$type<string[]>(),
-    invitedAt: timestamp("invited_at"),
-    joinedAt: timestamp("joined_at"),
-    invitedBy: uuid("invited_by").references(() => users.id),
-    isActive: boolean("is_active").default(true),
+    role: workspaceRoleEnum("role").notNull().default("viewer"),
+    joined_at: timestamp("joined_at").defaultNow().notNull(),
+    invited_by: uuid("invited_by").references(() => users.id, { onDelete: 'set null' }),
+    is_active: boolean("is_active").default(true),
   },
   (table) => ({
-    workspaceUserUnique: unique("workspace_user_unique").on(
-      table.workspaceId,
-      table.userId
+    unique_workspace_member: createUnique("unique_workspace_member").on(
+      table.workspace_id,
+      table.user_id
     ),
   })
 );
-
-// Helper function to create unique constraint
-export function unique(name: string) {
-  return {
-    name,
-    on: (...columns: any[]) => ({
-      name,
-      columns,
-    }),
-  };
-}
