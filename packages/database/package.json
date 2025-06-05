@@ -2,9 +2,9 @@
   "name": "@repo/database",
   "version": "1.0.0",
   "description": "",
-  "main": "./dist/src/index.js",
-  "module": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./src/index.d.ts",
   "files": [
     "dist"
   ],
@@ -12,10 +12,10 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "migrate": "npx drizzle-kit migrate",
-    "generate": "drizzle-kit generate",
-    "push": "drizzle-kit push",
-    "studio": "drizzle-kit studio --port=6001"
+    "migrate": "npx prisma migrate dev",
+    "generate": "npx prisma generate",
+    "push": "npx prisma db push",
+    "studio": "npx prisma studio"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +28,7 @@
     }
   },
   "dependencies": {
+    "@prisma/client": "^6.9.0",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.43.1",
     "pg": "^8.16.0"

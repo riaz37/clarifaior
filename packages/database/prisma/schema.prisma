@@ -1,0 +1,342 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  super_admin
+  admin
+  user
+}
+
+enum AgentStatus {
+  draft
+  active
+  paused
+  archived
+}
+
+enum WorkspaceRole {
+  owner
+  editor
+  viewer
+}
+
+model User {
+  id                       String    @id @default(uuid()) @db.Uuid
+  email                    String    @unique @db.VarChar(255)
+  password_hash            String?   @db.VarChar(255)
+  first_name               String?   @db.VarChar(100)
+  last_name                String?   @db.VarChar(100)
+  avatar                   String?   @db.Text
+  email_verified           Boolean   @default(false)
+  email_verification_token String?   @db.VarChar(255)
+  reset_password_token     String?   @db.VarChar(255)
+  reset_password_expires   DateTime?
+  role                     UserRole  @default(user)
+  last_login_at            DateTime?
+  is_active                Boolean   @default(true)
+  preferences              Json?     @default("{}")
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @default(now()) @updatedAt
+
+  // Relations
+  workspaces_owned    Workspace[]         @relation("WorkspaceOwner")
+  workspaces          WorkspaceMember[]
+  agents_created      Agent[]
+  workflows_created   Workflow[]
+  workflow_versions   WorkflowVersion[]
+  refresh_tokens      RefreshToken[]
+  audit_logs          AuditLog[]
+  notifications       Notification[]
+  integrations        Integration[]
+  workflow_executions WorkflowExecution[] @relation("WorkflowExecutionTriggerer")
+}
+
+model Workspace {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(100)
+  slug        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  logo        String?  @db.Text
+  owner_id    String   @map("owner_id") @db.Uuid
+  plan        String   @default("free") @db.VarChar(50)
+  settings    Json?    @default("{}")
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+
+  // Relations
+  owner               User                @relation("WorkspaceOwner", fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  members             WorkspaceMember[]
+  agents              Agent[]
+  workflows           Workflow[]
+  audit_logs          AuditLog[]
+  subscription        Subscription?
+  usage_tracking      UsageTracking[]
+  workflow_executions WorkflowExecution[]
+  integrations        Integration[]
+  notifications       Notification[]      @relation("WorkspaceNotifications")
+}
+
+model WorkspaceMember {
+  id           String        @id @default(uuid()) @db.Uuid
+  workspace_id String        @map("workspace_id") @db.Uuid
+  user_id      String        @map("user_id") @db.Uuid
+  role         WorkspaceRole @default(viewer)
+  joined_at    DateTime      @default(now())
+  invited_by   String?       @map("invited_by") @db.Uuid
+  is_active    Boolean       @default(true)
+
+  // Relations
+  workspace Workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([workspace_id, user_id], name: "unique_workspace_member")
+  @@map("workspace_members")
+}
+
+model Agent {
+  id               String   @id @default(uuid()) @db.Uuid
+  workspace_id     String   @db.Uuid
+  created_by       String   @db.Uuid
+  name             String   @db.VarChar(255)
+  description      String?  @db.Text
+  type             String   @db.VarChar(50)
+  config           Json?    @default("{}")
+  graph_definition Json?    @default("{}")
+  status           String?  @default("active") @db.VarChar(50)
+  version          String?  @default("1.0.0") @db.VarChar(20)
+  metrics          Json?    @default("{}")
+  created_at       DateTime @default(now()) @map("created_at")
+  updated_at       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  workspace Workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  creator   User      @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("agents")
+}
+
+model Workflow {
+  id                     String    @id @default(uuid()) @db.Uuid
+  workspace_id           String    @db.Uuid
+  created_by             String    @db.Uuid
+  name                   String    @db.VarChar(255)
+  description            String?   @db.Text
+  natural_language_query String?   @db.Text
+  status                 String?   @default("draft") @db.VarChar(50)
+  version                String?   @default("1.0.0") @db.VarChar(20)
+  definition             Json?     @default("{}")
+  ai_metadata            Json?     @default("{}") @map("ai_metadata")
+  settings               Json?     @default("{}")
+  tags                   Json?     @default("[]")
+  is_template            Boolean   @default(false)
+  is_public              Boolean   @default(false)
+  execution_count        String?   @default("0") @db.VarChar(20)
+  success_rate           String?   @default("0") @db.VarChar(10)
+  avg_execution_time     String?   @db.VarChar(20)
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @default(now()) @updatedAt
+  published_at           DateTime?
+  archived_at            DateTime?
+
+  // Relations
+  workspace  Workspace           @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  creator    User                @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  versions   WorkflowVersion[]
+  executions WorkflowExecution[]
+
+  @@map("workflows")
+}
+
+model WorkflowVersion {
+  id          String   @id @default(uuid()) @db.Uuid
+  workflow_id String   @db.Uuid
+  version     String   @db.VarChar(20)
+  definition  Json?
+  changelog   String?  @db.Text
+  created_by  String   @db.Uuid
+  created_at  DateTime @default(now())
+
+  // Relations
+  workflow Workflow @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+  creator  User     @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("workflow_versions")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid()) @db.Uuid
+  workspace_id String   @db.Uuid
+  user_id      String?  @db.Uuid
+  action       String   @db.VarChar(100)
+  resourceType String   @map("resource_type") @db.VarChar(50)
+  resourceId   String?  @map("resource_id") @db.Uuid
+  details      Json?    @default("{}")
+  metadata     Json?    @default("{}")
+  ip_address   String?  @map("ip_address") @db.VarChar(45)
+  user_agent   String?  @map("user_agent") @db.Text
+  severity     String?  @default("info") @db.VarChar(20)
+  created_at   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  workspace Workspace? @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  user      User?      @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+model Subscription {
+  id                     String    @id @default(cuid()) @db.Uuid
+  workspace_id           String    @unique @db.Uuid
+  stripe_customer_id     String?   @db.VarChar(255)
+  stripe_subscription_id String?   @db.VarChar(255)
+  stripe_price_id        String?   @db.VarChar(255)
+  plan                   String    @db.VarChar(50)
+  status                 String    @db.VarChar(50)
+  current_period_start   DateTime?
+  current_period_end     DateTime?
+  cancel_at              DateTime?
+  canceled_at            DateTime?
+  limits                 Json?     @default("{}")
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @default(now()) @updatedAt
+
+  // Relations
+  workspace Workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model UsageTracking {
+  id           String   @id @default(cuid()) @db.Uuid
+  workspace_id String   @db.Uuid
+  metric_name  String   @db.VarChar(100)
+  metric_value Int
+  period_start DateTime
+  period_end   DateTime
+  created_at   DateTime @default(now())
+
+  // Relations
+  workspace Workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+
+  @@map("usage_tracking")
+}
+
+model WorkflowExecution {
+  id           String    @id @default(cuid()) @db.Uuid
+  workflow_id  String    @db.Uuid
+  workspace_id String    @db.Uuid
+  triggered_by String?   @db.Uuid
+  status       String    @db.VarChar(50)
+  input        Json?
+  output       Json?
+  context      Json?     @default("{}")
+  started_at   DateTime  @default(now())
+  completed_at DateTime?
+  duration     String?   @db.VarChar(20)
+  error        Json?     @default("{}")
+  created_at   DateTime  @default(now())
+
+  // Relations
+  workflow  Workflow        @relation(fields: [workflow_id], references: [id])
+  workspace Workspace       @relation(fields: [workspace_id], references: [id])
+  triggerer User?           @relation("WorkflowExecutionTriggerer", fields: [triggered_by], references: [id])
+  steps     ExecutionStep[]
+
+  @@map("workflow_executions")
+}
+
+model ExecutionStep {
+  id             String    @id @default(cuid()) @db.Uuid
+  execution_id   String    @db.Uuid
+  parent_step_id String?   @db.Uuid
+  step_id        String    @db.VarChar(255)
+  name           String    @db.VarChar(255)
+  type           String    @db.VarChar(100)
+  status         String    @default("pending") @db.VarChar(50)
+  input          Json?     @default("{}")
+  output         Json?     @default("{}")
+  context        Json?     @default("{}")
+  error          Json?     @default("{}")
+  retry_count    Int       @default(0)
+  max_retries    Int       @default(3)
+  started_at     DateTime?
+  completed_at   DateTime?
+  duration_ms    Int?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @default(now()) @updatedAt
+
+  // Relations
+  execution   WorkflowExecution @relation(fields: [execution_id], references: [id], onDelete: Cascade)
+  parent_step ExecutionStep?    @relation("StepHierarchy", fields: [parent_step_id], references: [id])
+  child_steps ExecutionStep[]   @relation("StepHierarchy")
+
+  @@map("execution_steps")
+}
+
+model Integration {
+  id           String    @id @default(cuid()) @db.Uuid
+  workspace_id String    @db.Uuid
+  user_id      String    @db.Uuid
+  provider     String    @db.VarChar(100)
+  name         String    @db.VarChar(255)
+  credentials  Json?     @default("{}")
+  config       Json?     @default("{}")
+  status       String?   @default("active") @db.VarChar(50)
+  last_sync    DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @default(now()) @updatedAt
+
+  // Relations
+  workspace Workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [user_id], references: [id], onDelete: NoAction)
+
+  @@map("integrations")
+}
+
+model Notification {
+  id           String    @id @default(uuid()) @db.Uuid
+  user_id      String    @db.Uuid
+  workspace_id String?   @db.Uuid
+  type         String    @db.VarChar(50)
+  title        String    @db.VarChar(255)
+  message      String    @db.Text
+  context      Json?     @default("{}")
+  priority     String?   @default("normal") @db.VarChar(20)
+  is_read      Boolean   @default(false)
+  read_at      DateTime?
+  channels     Json?     @default("{}")
+  created_at   DateTime  @default(now())
+
+  // Relations
+  user      User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation("WorkspaceNotifications", fields: [workspace_id], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model RefreshToken {
+  id                String    @id @default(uuid()) @db.Uuid
+  user_id           String    @db.Uuid
+  token             String    @db.Text
+  expires_at        DateTime
+  created_at        DateTime  @default(now())
+  created_by_ip     String?   @db.Text
+  revoked           Boolean   @default(false)
+  revoked_at        DateTime?
+  revoked_by_ip     String?   @db.Text
+  replaced_by_token String?   @db.Text
+  is_active         Boolean   @default(true)
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}

@@ -5,21 +5,38 @@ import {
   IsString,
   MinLength,
   Matches,
+  IsOptional,
 } from 'class-validator';
 
 export class RegisterDto {
   @ApiProperty({
-    example: 'John Doe',
-    description: 'User full name',
+    example: 'John',
+    description: 'User first name',
     minLength: 2,
   })
   @IsString()
-  @IsNotEmpty({ message: 'Name is required' })
-  @MinLength(2, { message: 'Name must be at least 2 characters long' })
+  @IsNotEmpty({ message: 'First name is required' })
+  @MinLength(2, { message: 'First name must be at least 2 characters long' })
   @Matches(/^[a-zA-Z\s'-]+$/, {
-    message: 'Name can only contain letters, spaces, hyphens, and apostrophes',
+    message:
+      'First name can only contain letters, spaces, hyphens, and apostrophes',
   })
-  name: string;
+  first_name: string;
+
+  @ApiProperty({
+    example: 'Doe',
+    description: 'User last name',
+    minLength: 2,
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  @MinLength(2, { message: 'Last name must be at least 2 characters long' })
+  @Matches(/^[a-zA-Z\s'-]*$/, {
+    message:
+      'Last name can only contain letters, spaces, hyphens, and apostrophes',
+  })
+  last_name?: string;
 
   @ApiProperty({
     example: 'user@example.com',
