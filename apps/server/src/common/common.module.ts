@@ -5,6 +5,8 @@ import { APP_INTERCEPTOR, APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { ValidationService } from './services/validation.service';
 import { EncryptionService } from './services/encryption.service';
 import { LoggerService } from './services/logger.service';
+import { PrismaService } from './services/prisma.service';
+import { ConfigService } from './services/config.service';
 
 // Interceptors
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
@@ -15,17 +17,15 @@ import { HttpExceptionFilter } from './filters/http-exception.filter';
 // Pipes
 import { CustomValidationPipe } from './pipes/validation.pipe';
 
-// Prisma
-import { PrismaService } from './services/prisma.service';
-
 @Global()
 @Module({
   providers: [
     // Services
-    PrismaService,
     ValidationService,
     EncryptionService,
     LoggerService,
+    PrismaService,
+    ConfigService,
 
     // Global interceptors
     {
@@ -45,6 +45,12 @@ import { PrismaService } from './services/prisma.service';
       useClass: CustomValidationPipe,
     },
   ],
-  exports: [PrismaService, ValidationService, EncryptionService, LoggerService],
+  exports: [
+    PrismaService,
+    ValidationService,
+    EncryptionService,
+    LoggerService,
+    ConfigService,
+  ],
 })
 export class CommonModule {}

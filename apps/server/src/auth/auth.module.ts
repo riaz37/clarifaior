@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '../common/services/config.service';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { LocalStrategy } from './strategies/local.strategy';
@@ -12,31 +12,22 @@ import { RefreshTokenGuard } from './guards/refresh-token.guard';
 @Module({
   imports: [
     PassportModule,
-    ConfigModule,
     // JWT Module for access tokens
     JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>(
-          'JWT_ACCESS_SECRET',
-          'default-access-secret',
-        ),
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.jwtSecret,
         signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '15m'),
+          expiresIn: configService.jwtExpiresIn,
         },
       }),
       inject: [ConfigService],
     }),
     // JWT Module for refresh tokens
     JwtModule.registerAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>(
-          'JWT_REFRESH_SECRET',
-          'default-refresh-secret',
-        ),
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.refreshSecret,
         signOptions: {
-          expiresIn: configService.get<string>('JWT_REFRESH_EXPIRES_IN', '7d'),
+          expiresIn: configService.refreshExpiresIn,
         },
       }),
       inject: [ConfigService],
@@ -48,10 +39,8 @@ import { RefreshTokenGuard } from './guards/refresh-token.guard';
     LocalStrategy,
     JwtStrategy,
     RefreshTokenStrategy,
-    {
-      provide: 'REFRESH_TOKEN_GUARD',
-      useClass: RefreshTokenGuard,
-    },
+    RefreshTokenGuard,
+    ConfigService,
   ],
   exports: [AuthService, JwtModule],
 })

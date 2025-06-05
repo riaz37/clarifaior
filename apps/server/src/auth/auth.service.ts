@@ -4,18 +4,20 @@ import {
   UnauthorizedException,
   ConflictException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
-import { PrismaService } from '@common/services/prisma.service';
+
+import { ConfigService } from '../common/services/config.service';
+import { PrismaService } from '../common/services/prisma.service';
+import { ValidationService } from '../common/services/validation.service';
+import { LoggerService } from '../common/services/logger.service';
+
 import { AuthResponse, JwtPayload, RefreshTokenResponse } from '@repo/types';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { ValidationService } from '@common/services/validation.service';
-import { LoggerService } from '@common/services/logger.service';
 
 @Injectable()
 export class AuthService {
@@ -31,20 +33,19 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly logger: LoggerService,
   ) {
-    this.JWT_ACCESS_SECRET =
-      this.configService.get<string>('JWT_ACCESS_SECRET') ||
-      'default-access-secret';
+    this.JWT_ACCESS_SECRET = this.configService.jwtSecret;
+    this.JWT_REFRESH_SECRET = this.configService.refreshSecret;
 
-    this.JWT_REFRESH_SECRET =
-      this.configService.get<string>('JWT_REFRESH_SECRET') ||
-      'default-refresh-secret';
-
-    this.JWT_EXPIRES_IN = Number(
-      this.configService.get<string>('JWT_EXPIRES_IN') || '900',
-    );
+    this.JWT_EXPIRES_IN =
+      typeof this.configService.jwtExpiresIn === 'number'
+        ? this.configService.jwtExpiresIn
+        : 900; // Default to 15 minutes
 
     this.JWT_REFRESH_EXPIRES_IN =
-      Number(this.configService.get<string>('JWT_REFRESH_EXPIRES_IN')) || 86400;
+      typeof this.configService.refreshExpiresIn === 'number'
+        ? this.configService.refreshExpiresIn
+        : 86400; // Default to 1 day
+
     this.logger.setContext('AuthService');
   }
 
@@ -142,6 +143,26 @@ export class AuthService {
       expires_in: this.JWT_EXPIRES_IN,
       user: userResponse,
     };
+  }
+
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    if (!isPasswordValid) {
+      return null;
+    }
+
+    // Return user without password hash
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password_hash, ...result } = user;
+    return result;
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
