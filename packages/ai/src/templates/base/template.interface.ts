@@ -149,3 +149,5 @@ export abstract class BaseTemplate {
     }
   }
 }
+
+export { BaseTemplate }

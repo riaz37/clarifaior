@@ -78,3 +78,5 @@ export abstract class IAgent {
     return { ...this.config };
   }
 }
+
+export { IAgent }

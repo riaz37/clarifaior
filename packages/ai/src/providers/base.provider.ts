@@ -78,3 +78,5 @@ export abstract class BaseLLMProvider {
     }
   }
 }
+
+export { BaseLLMProvider }
