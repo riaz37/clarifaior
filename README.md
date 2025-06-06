@@ -199,35 +199,140 @@ clarifaior/
 │   │
 │   ├── ai/                        # AI/LLM Package with LangGraph
 │   │   ├── src/
-│   │   │   ├── providers/         # LLM providers (OpenAI, Anthropic, etc.)
-│   │   │   ├── agents/            # LangGraph Agent definitions
+│   │   │   ├── index.ts                     # Main exports
+│   │   │   ├── config/                      # AI configuration
+│   │   │   │   ├── llm.config.ts
+│   │   │   │   ├── embedding.config.ts
+│   │   │   │   └── memory.config.ts
+│   │   │   ├── providers/                   # LLM providers
+│   │   │   │   ├── base.provider.ts
+│   │   │   │   ├── openai.provider.ts
+│   │   │   │   ├── anthropic.provider.ts
+│   │   │   │   ├── google.provider.ts
+│   │   │   │   ├── azure-openai.provider.ts
+│   │   │   │   └── provider.factory.ts
+│   │   │   ├── agents/                      # Specialized AI agents
+│   │   │   │   ├── base/
+│   │   │   │   │   ├── base-agent.ts
+│   │   │   │   │   └── agent.interface.ts
 │   │   │   │   ├── workflow-designer.agent.ts
 │   │   │   │   ├── intent-parser.agent.ts
 │   │   │   │   ├── integration-mapper.agent.ts
 │   │   │   │   ├── validator.agent.ts
-│   │   │   │   └── execution-planner.agent.ts
-│   │   │   ├── graphs/            # LangGraph workflow definitions
+│   │   │   │   ├── execution-planner.agent.ts
+│   │   │   │   ├── optimizer.agent.ts
+│   │   │   │   ├── debugger.agent.ts
+│   │   │   │   └── explainer.agent.ts
+│   │   │   ├── graphs/                      # LangGraph workflow definitions
+│   │   │   │   ├── base/
+│   │   │   │   │   ├── base-graph.ts
+│   │   │   │   │   └── graph.interface.ts
 │   │   │   │   ├── workflow-creation.graph.ts
 │   │   │   │   ├── execution.graph.ts
 │   │   │   │   ├── debugging.graph.ts
-│   │   │   │   └── optimization.graph.ts
-│   │   │   ├── state/             # LangGraph state management
+│   │   │   │   ├── optimization.graph.ts
+│   │   │   │   ├── validation.graph.ts
+│   │   │   │   └── conversation.graph.ts
+│   │   │   ├── state/                       # LangGraph state management
+│   │   │   │   ├── base/
+│   │   │   │   │   ├── base-state.ts
+│   │   │   │   │   └── state.interface.ts
 │   │   │   │   ├── workflow-state.ts
 │   │   │   │   ├── conversation-state.ts
-│   │   │   │   └── execution-state.ts
-│   │   │   ├── tools/             # LangChain tools for agents
-│   │   │   │   ├── integration-tools.ts
-│   │   │   │   ├── validation-tools.ts
-│   │   │   │   └── execution-tools.ts
-│   │   │   ├── parsers/           # NLP parsers for workflow creation
-│   │   │   ├── templates/         # Prompt templates
-│   │   │   ├── memory/            # LangChain memory implementations
+│   │   │   │   ├── execution-state.ts
+│   │   │   │   ├── validation-state.ts
+│   │   │   │   └── optimization-state.ts
+│   │   │   ├── tools/                       # LangChain tools
+│   │   │   │   ├── base/
+│   │   │   │   │   ├── base-tool.ts
+│   │   │   │   │   └── tool.interface.ts
+│   │   │   │   ├── integration/
+│   │   │   │   │   ├── slack-tools.ts
+│   │   │   │   │   ├── gmail-tools.ts
+│   │   │   │   │   ├── notion-tools.ts
+│   │   │   │   │   ├── discord-tools.ts
+│   │   │   │   │   └── generic-api-tool.ts
+│   │   │   │   ├── validation/
+│   │   │   │   │   ├── workflow-validator.tool.ts
+│   │   │   │   │   ├── security-validator.tool.ts
+│   │   │   │   │   └── integration-validator.tool.ts
+│   │   │   │   ├── execution/
+│   │   │   │   │   ├── step-executor.tool.ts
+│   │   │   │   │   ├── condition-evaluator.tool.ts
+│   │   │   │   │   └── data-transformer.tool.ts
+│   │   │   │   └── utility/
+│   │   │   │       ├── code-generator.tool.ts
+│   │   │   │       ├── schema-generator.tool.ts
+│   │   │   │       └── test-generator.tool.ts
+│   │   │   ├── parsers/                     # Input/output parsers
+│   │   │   │   ├── base/
+│   │   │   │   │   └── base-parser.ts
+│   │   │   │   ├── intent-parser.ts
+│   │   │   │   ├── entity-extractor.ts
+│   │   │   │   ├── workflow-parser.ts
+│   │   │   │   ├── integration-parser.ts
+│   │   │   │   └── condition-parser.ts
+│   │   │   ├── templates/                   # Prompt templates
+│   │   │   │   ├── base/
+│   │   │   │   │   ├── base-template.ts
+│   │   │   │   │   └── template.interface.ts
+│   │   │   │   ├── workflow/
+│   │   │   │   │   ├── workflow-creation.template.ts
+│   │   │   │   │   ├── workflow-refinement.template.ts
+│   │   │   │   │   ├── workflow-explanation.template.ts
+│   │   │   │   │   └── workflow-optimization.template.ts
+│   │   │   │   ├── intent/
+│   │   │   │   │   ├── intent-classification.template.ts
+│   │   │   │   │   ├── entity-extraction.template.ts
+│   │   │   │   │   └── context-analysis.template.ts
+│   │   │   │   ├── validation/
+│   │   │   │   │   ├── workflow-validation.template.ts
+│   │   │   │   │   ├── security-check.template.ts
+│   │   │   │   │   └── integration-check.template.ts
+│   │   │   │   └── execution/
+│   │   │   │       ├── step-planning.template.ts
+│   │   │   │       ├── error-handling.template.ts
+│   │   │   │       └── optimization.template.ts
+│   │   │   ├── memory/                      # Memory implementations
+│   │   │   │   ├── base/
+│   │   │   │   │   ├── base-memory.ts
+│   │   │   │   │   └── memory.interface.ts
 │   │   │   │   ├── conversation-memory.ts
 │   │   │   │   ├── workflow-memory.ts
-│   │   │   │   └── user-memory.ts
-│   │   │   └── orchestrator/      # Main LangGraph orchestrator
-│   │   │       ├── workflow-orchestrator.ts
-│   │   │       └── agent-router.ts
+│   │   │   │   ├── user-memory.ts
+│   │   │   │   ├── context-memory.ts
+│   │   │   │   └── vector-memory.ts
+│   │   │   ├── orchestrator/                # Main orchestration layer
+│   │   │   │   ├── ai-orchestrator.ts
+│   │   │   │   ├── graph-executor.ts
+│   │   │   │   ├── agent-router.ts
+│   │   │   │   ├── execution-coordinator.ts
+│   │   │   │   └── fallback-handler.ts
+│   │   │   ├── embeddings/                  # Vector embeddings
+│   │   │   │   ├── embedding.service.ts
+│   │   │   │   ├── vector-store.ts
+│   │   │   │   ├── similarity.service.ts
+│   │   │   │   └── document-processor.ts
+│   │   │   ├── monitoring/                  # AI monitoring and analytics
+│   │   │   │   ├── performance-monitor.ts
+│   │   │   │   ├── cost-tracker.ts
+│   │   │   │   ├── quality-assessor.ts
+│   │   │   │   └── usage-analytics.ts
+│   │   │   ├── cache/                       # AI response caching
+│   │   │   │   ├── response-cache.ts
+│   │   │   │   ├── embedding-cache.ts
+│   │   │   │   └── model-cache.ts
+│   │   │   ├── security/                    # AI security measures
+│   │   │   │   ├── content-filter.ts
+│   │   │   │   ├── prompt-injection-detector.ts
+│   │   │   │   ├── sensitive-data-detector.ts
+│   │   │   │   └── rate-limiter.ts
+│   │   │   └── utils/                       # Utility functions
+│   │   │       ├── token-counter.ts
+│   │   │       ├── text-processor.ts
+│   │   │       ├── schema-validator.ts
+│   │   │       ├── retry-handler.ts
+│   │   │       └── error-handler.ts
 │   │   └── package.json
 │   │
 │   └── config/                    # Shared configurations

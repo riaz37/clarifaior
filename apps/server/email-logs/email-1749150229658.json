@@ -1,0 +1,7 @@
+{
+  "to": "user@example.com",
+  "subject": "Verify your email",
+  "timestamp": "2025-06-05T19:03:49.658Z",
+  "verificationUrl": "http://localhost:3000/verify-email?token=871d60a66e5497aacb8675ca707b402ee3e6c2db9ecd8fabe4ceab1509e2869f",
+  "token": "871d60a66e5497aacb8675ca707b402ee3e6c2db9ecd8fabe4ceab1509e2869f"
+}
