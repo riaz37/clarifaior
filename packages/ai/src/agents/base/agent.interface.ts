@@ -79,4 +79,3 @@ export abstract class IAgent {
   }
 }
 
-export { IAgent }
