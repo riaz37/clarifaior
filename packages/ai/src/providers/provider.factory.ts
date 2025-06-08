@@ -1,44 +1,48 @@
-import { BaseLLMProvider, LLMConfig } from "./base.provider";
+import { LLMProviderConfig } from "@ai/config/llm.config";
+import { BaseLLMProvider } from "./base.provider";
 import { DeepSeekProvider } from "./deepseek.provider";
 import { OpenAIProvider } from "./openai.provider";
 
-export type ProviderType = "deepseek" | "openai" | "anthropic" | "google";
-
-export interface ProviderConfig extends LLMConfig {
-  provider: ProviderType;
-  [key: string]: any;
-}
+export type ProviderType = "openai" | "deepseek";
 
 export class ProviderFactory {
   private static providers = new Map<string, BaseLLMProvider>();
 
-  static createProvider(config: ProviderConfig): BaseLLMProvider {
-    const cacheKey = `${config.provider}-${config.model}-${config.apiKey.slice(-8)}`;
+  static createProvider(
+    type: ProviderType,
+    config: Omit<LLMProviderConfig, "provider">
+  ): BaseLLMProvider {
+    // Create provider-specific config with the provider type
+    const providerConfig: LLMProviderConfig = {
+      ...config,
+      provider: type,
+    } as const;
+
+    const cacheKey = `${type}-${config.model}-${config.apiKey?.slice(-8) || "default"}`;
 
     // Return cached provider if exists
-    if (this.providers.has(cacheKey)) {
-      return this.providers.get(cacheKey)!;
+    const cachedProvider = this.providers.get(cacheKey);
+    if (cachedProvider) {
+      return cachedProvider;
     }
 
+    // Create new provider with appropriate type
     let provider: BaseLLMProvider;
-
-    switch (config.provider) {
-      case "deepseek":
-        provider = new DeepSeekProvider(config);
-        break;
-
+    switch (type) {
       case "openai":
-        provider = new OpenAIProvider(config);
+        provider = new OpenAIProvider({
+          ...providerConfig,
+          baseUrl: config.baseUrl || "https://api.openai.com/v1",
+        });
         break;
-
-      case "anthropic":
-        throw new Error("Anthropic provider not yet implemented");
-
-      case "google":
-        throw new Error("Google provider not yet implemented");
-
+      case "deepseek":
+        provider = new DeepSeekProvider({
+          ...providerConfig,
+          baseUrl: config.baseUrl || "https://api.deepseek.com/v1",
+        });
+        break;
       default:
-        throw new Error(`Unknown provider: ${config.provider}`);
+        throw new Error(`Unsupported provider type: ${type}`);
     }
 
     // Cache the provider

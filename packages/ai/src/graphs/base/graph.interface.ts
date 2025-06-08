@@ -1,5 +1,4 @@
-import { StateGraph } from '@langchain/langgraph';
-import { BaseMessage } from '@langchain/core/messages';
+import { StateGraph } from "@langchain/langgraph";
 
 /**
  * Represents the state of a workflow execution
@@ -9,11 +8,11 @@ export interface WorkflowState {
   input: any;
   output?: any;
   error?: Error;
-  
+
   // Execution tracking
   currentStep?: string;
   steps: WorkflowStep[];
-  
+
   // Additional context
   [key: string]: any;
 }
@@ -34,13 +33,17 @@ export interface WorkflowStep {
 /**
  * A node in the workflow graph
  */
-export interface WorkflowNode<TState extends WorkflowState, TInput = any, TOutput = any> {
+export interface WorkflowNode<
+  TState extends WorkflowState,
+  TInput = any,
+  TOutput = any,
+> {
   /** Unique identifier for the node */
   name: string;
-  
+
   /** Human-readable description of the node's purpose */
   description?: string;
-  
+
   /**
    * Executes the node's logic
    * @param state Current workflow state
@@ -48,7 +51,7 @@ export interface WorkflowNode<TState extends WorkflowState, TInput = any, TOutpu
    * @returns The output of the node
    */
   execute: (state: TState, input?: TInput) => Promise<TOutput>;
-  
+
   /**
    * Determines the next node(s) to execute
    * @param output The output from this node's execution
@@ -60,32 +63,43 @@ export interface WorkflowNode<TState extends WorkflowState, TInput = any, TOutpu
 /**
  * Configuration for a workflow graph
  */
-export interface WorkflowGraphConfig<TState extends WorkflowState, TInput = any, TOutput = any> {
-  /** List of nodes in the workflow */
+export interface WorkflowGraphConfig<
+  TState extends WorkflowState = WorkflowState,
+  TInput = any,
+  TOutput = any,
+> {
+  /** The nodes in the workflow */
   nodes: WorkflowNode<TState, TInput, TOutput>[];
-  
-  /** Name of the entry point node */
+
+  /** The entry point node name */
   entryPoint: string;
-  
-  /** Optional name of the output node */
+
+  /** Optional output node name (defaults to last node) */
   outputNode?: string;
-  
-  /** Maximum number of iterations to prevent infinite loops */
+
+  /** Maximum number of iterations (default: 10) */
   maxIterations?: number;
-  
-  /** Default state values */
+
+  /** Initial state values */
   initialState?: Partial<TState>;
+  
+  /** Optional checkpointer for state persistence */
+  checkpointer?: any; // Using 'any' as the actual type depends on the StateGraph implementation
 }
 
 /**
  * Interface for a workflow graph executor
  */
-export interface IWorkflowGraph<TState extends WorkflowState, TInput = any, TOutput = any> {
+export interface IWorkflowGraph<
+  TState extends WorkflowState,
+  TInput = any,
+  TOutput = any,
+> {
   /**
    * Compiles the workflow into an executable graph
    */
   compile(): StateGraph<TState>;
-  
+
   /**
    * Executes the workflow with the given input
    * @param input The input to the workflow
@@ -93,20 +107,20 @@ export interface IWorkflowGraph<TState extends WorkflowState, TInput = any, TOut
    * @returns The output of the workflow
    */
   execute(input: TInput, initialState?: Partial<TState>): Promise<TOutput>;
-  
+
   /**
    * Adds a node to the workflow
    * @param node The node to add
    */
   addNode(node: WorkflowNode<TState, TInput, TOutput>): void;
-  
+
   /**
    * Removes a node from the workflow
    * @param nodeName Name of the node to remove
    * @returns True if the node was removed, false otherwise
    */
   removeNode(nodeName: string): boolean;
-  
+
   /**
    * Gets the current workflow configuration
    */

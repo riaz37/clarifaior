@@ -1,57 +1,39 @@
-import {
-  BaseLLMProvider,
-  LLMConfig,
-  LLMResponse,
-  EmbeddingResponse,
-  StreamingResponse,
-} from "./base.provider";
-import OpenAI from "openai";
+import { LLMProviderConfig } from '@ai/config/llm.config';
+import { LLMResponse, EmbeddingResponse, StreamingResponse } from './types/provider';
+import { BaseLLMProvider } from './base.provider';
+import OpenAI from 'openai';
 
-// Configuration from environment
-const OPENROUTER_API_KEY =
-  process.env.OPENROUTER_API_KEY ||
-  " npx ts-node --transpile-only src/test-llm.ts";
-const SITE_URL = process.env.SITE_URL || "http://localhost:3000";
-const SITE_NAME = process.env.SITE_NAME || "Local Development";
-
-interface OpenAIMessage {
+interface DeepSeekAIMessage {
   role: "user" | "assistant" | "system";
   content: string;
 }
 
-export interface DeepSeekConfig extends Omit<LLMConfig, "model"> {
-  baseUrl?: string;
+export interface DeepSeekConfig extends LLMProviderConfig {
   openRouterApiKey?: string;
   siteUrl?: string;
   siteName?: string;
-  model: string; // Make model required in the config
+  baseUrl?: string;
 }
 
 export class DeepSeekProvider extends BaseLLMProvider {
   private openai: OpenAI;
-  private openRouterApiKey: string;
   private siteUrl: string;
   private siteName: string;
-  private model: string;
+  private openRouterApiKey: string;
 
   constructor(config: DeepSeekConfig) {
-    super(config, "DeepSeek");
-
-    // Use provided config or fall back to environment variables
-    this.openRouterApiKey = config.openRouterApiKey || OPENROUTER_API_KEY;
-    this.siteUrl = config.siteUrl || SITE_URL;
-    this.siteName = config.siteName || SITE_NAME;
-    this.model = config.model || "deepseek/deepseek-r1-0528:free";
-
-    if (!this.openRouterApiKey) {
-      throw new Error(
-        "OpenRouter API key is required. Set OPENROUTER_API_KEY in your environment variables."
-      );
-    }
-
+    super({
+      ...config,
+      baseUrl: config.baseUrl || 'https://openrouter.ai/api/v1',
+    });
+    
+    this.openRouterApiKey = config.openRouterApiKey || process.env.OPENROUTER_API_KEY || '';
+    this.siteUrl = config.siteUrl || process.env.SITE_URL || 'http://localhost:3000';
+    this.siteName = config.siteName || process.env.SITE_NAME || 'Local Development';
+    
     this.openai = new OpenAI({
-      baseURL: "https://openrouter.ai/api/v1",
       apiKey: this.openRouterApiKey,
+      baseURL: this.baseUrl,
       defaultHeaders: {
         "HTTP-Referer": this.siteUrl,
         "X-Title": this.siteName,
@@ -63,32 +45,29 @@ export class DeepSeekProvider extends BaseLLMProvider {
 
   async generateCompletion(
     prompt: string,
-    options?: Partial<LLMConfig>
+    options?: Partial<DeepSeekConfig>
   ): Promise<LLMResponse> {
-    const requestConfig = { ...this.config, ...options };
+    const requestConfig = { ...this.config, ...options } as DeepSeekConfig;
 
     try {
-      const messages: OpenAIMessage[] = [
+      const messages: DeepSeekAIMessage[] = [
         {
           role: "user",
           content: prompt,
         },
       ];
 
-      const completion = await this.openai.chat.completions.create(
-        {
-          model: this.model,
-          messages,
-          temperature: requestConfig.temperature || 0.7,
-          max_tokens: requestConfig.maxTokens || 1000,
+      const completion = await this.openai.chat.completions.create({
+        model: this.config.model,
+        messages,
+        temperature: requestConfig.temperature || 0.7,
+        max_tokens: requestConfig.maxTokens || 1000,
+      }, {
+        headers: {
+          "HTTP-Referer": this.siteUrl,
+          "X-Title": this.siteName,
         },
-        {
-          headers: {
-            "HTTP-Referer": this.siteUrl,
-            "X-Title": this.siteName,
-          },
-        }
-      );
+      });
 
       return {
         content: completion.choices[0]?.message?.content || "",
@@ -113,9 +92,9 @@ export class DeepSeekProvider extends BaseLLMProvider {
 
   async generateEmbedding(
     text: string,
-    options?: Partial<LLMConfig>
+    options?: Partial<DeepSeekConfig>
   ): Promise<EmbeddingResponse> {
-    const requestConfig = { ...this.config, ...options };
+    const requestConfig = { ...this.config, ...options } as DeepSeekConfig;
 
     try {
       const response = await this.openai.embeddings.create(
@@ -150,9 +129,9 @@ export class DeepSeekProvider extends BaseLLMProvider {
 
   async *streamCompletion(
     prompt: string,
-    options?: Partial<LLMConfig>
+    options?: Partial<DeepSeekConfig>
   ): AsyncGenerator<StreamingResponse> {
-    const requestConfig = { ...this.config, ...options };
+    const requestConfig = { ...this.config, ...options } as DeepSeekConfig;
 
     try {
       const response = await fetch(
@@ -234,14 +213,16 @@ export class DeepSeekProvider extends BaseLLMProvider {
         }
       }
     } catch (error) {
-      throw new Error(`DeepSeek streaming failed: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
+      throw new Error(`DeepSeek streaming failed: ${errorMessage}`);
     }
   }
 
   async generateStructuredOutput<T>(
     prompt: string,
     schema: any,
-    options?: Partial<LLMConfig>
+    options?: Partial<DeepSeekConfig>
   ): Promise<T> {
     const structuredPrompt = `${prompt}\n\nPlease respond with valid JSON that matches this schema:\n${JSON.stringify(schema, null, 2)}`;
 
@@ -250,7 +231,9 @@ export class DeepSeekProvider extends BaseLLMProvider {
     try {
       return JSON.parse(response.content) as T;
     } catch (error) {
-      throw new Error(`Failed to parse structured output: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
+      throw new Error(`Failed to parse structured output: ${errorMessage}`);
     }
   }
 

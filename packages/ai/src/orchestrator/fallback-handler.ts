@@ -1,4 +1,4 @@
-import { Logger } from '../../utils/logger';
+import { Logger } from '@ai/utils/logger';
 import { Agent, AgentRequest, AgentResponse } from './types/agent-router.types';
 
 /**

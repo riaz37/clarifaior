@@ -1,59 +1,34 @@
-export interface LLMConfig {
-  apiKey: string;
-  model: string;
-  temperature?: number;
-  maxTokens?: number;
-  timeout?: number;
-  retries?: number;
-}
-
-export interface LLMResponse {
-  content: string;
-  model: string;
-  tokensUsed: number;
-  cost?: number;
-  metadata?: Record<string, any>;
-}
-
-export interface EmbeddingResponse {
-  embedding: number[];
-  model: string;
-  tokensUsed: number;
-  cost?: number;
-}
-
-export interface StreamingResponse {
-  content: string;
-  done: boolean;
-  model: string;
-  tokensUsed?: number;
-}
+import { LLMProviderConfig } from '@ai/config/llm.config';
+import { LLMResponse, EmbeddingResponse, StreamingResponse } from './types/provider';
 
 export abstract class BaseLLMProvider {
-  protected config: LLMConfig;
+  protected config: LLMProviderConfig;
   protected name: string;
+  protected baseUrl: string;
 
-  constructor(config: LLMConfig, name: string) {
+  constructor(config: LLMProviderConfig, baseUrl?: string) {
     this.config = config;
-    this.name = name;
+    this.name = config.provider;
+    this.baseUrl = baseUrl || config.baseUrl || '';
+    this.validateConfig();
   }
 
   abstract generateCompletion(
     prompt: string,
-    options?: Partial<LLMConfig>
+    options?: Partial<LLMProviderConfig>
   ): Promise<LLMResponse>;
 
   abstract generateEmbedding(text: string): Promise<EmbeddingResponse>;
 
   abstract streamCompletion(
     prompt: string,
-    options?: Partial<LLMConfig>
+    options?: Partial<LLMProviderConfig>
   ): AsyncGenerator<StreamingResponse>;
 
   abstract generateStructuredOutput<T>(
     prompt: string,
     schema: any,
-    options?: Partial<LLMConfig>
+    options?: Partial<LLMProviderConfig>
   ): Promise<T>;
 
   getName(): string {
@@ -62,11 +37,6 @@ export abstract class BaseLLMProvider {
 
   getModel(): string {
     return this.config.model;
-  }
-
-  protected calculateCost(tokensUsed: number, model: string): number {
-    // Base implementation - override in specific providers
-    return 0;
   }
 
   protected validateConfig(): void {
@@ -78,3 +48,4 @@ export abstract class BaseLLMProvider {
     }
   }
 }
+export { LLMResponse };

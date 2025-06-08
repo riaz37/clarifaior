@@ -1,263 +1,447 @@
-import { BaseMessage } from '@langchain/core/messages';
+// Missing types for the conversation state system
 
-export interface Message {
-  id: string;
-  role: 'user' | 'assistant' | 'system' | 'function';
+// Base LangChain message type (if not importing from @langchain/core)
+export interface BaseMessage {
   content: string;
-  timestamp: number;
-  metadata?: Record<string, any>;
   name?: string;
-  function_call?: {
-    name: string;
-    arguments: string;
-  };
+  additional_kwargs?: Record<string, any>;
 }
 
-export interface ConversationTurn {
+// Workflow execution types
+export interface WorkflowStep {
   id: string;
-  userMessage: Message;
-  assistantMessage?: Message;
-  timestamp: number;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  metadata?: Record<string, any>;
+  name: string;
+  type: "trigger" | "action" | "condition" | "delay" | "transform";
+  config: Record<string, any>;
+  position: { x: number; y: number };
+  connections: {
+    input?: string[];
+    output?: string[];
+  };
+  status?: "pending" | "running" | "completed" | "failed" | "skipped";
+  executionTime?: number;
+  error?: string;
 }
 
-export interface ConversationContext {
-  conversationId: string;
-  userId: string;
+export interface WorkflowDefinition {
+  id: string;
+  name: string;
+  description?: string;
+  version: string;
+  steps: WorkflowStep[];
+  triggers: WorkflowTrigger[];
+  variables: WorkflowVariable[];
+  settings: WorkflowSettings;
+  metadata?: Record<string, any>;
   createdAt: number;
   updatedAt: number;
+  createdBy: string;
+  status: "draft" | "active" | "paused" | "archived";
+}
+
+export interface WorkflowTrigger {
+  id: string;
+  type: "webhook" | "schedule" | "email" | "api" | "manual" | "integration";
+  config: Record<string, any>;
+  enabled: boolean;
+  conditions?: TriggerCondition[];
+}
+
+export interface TriggerCondition {
+  field: string;
+  operator: "equals" | "contains" | "greater_than" | "less_than" | "regex";
+  value: any;
+  logicalOperator?: "AND" | "OR";
+}
+
+export interface WorkflowVariable {
+  id: string;
+  name: string;
+  type: "string" | "number" | "boolean" | "object" | "array";
+  value?: any;
+  defaultValue?: any;
+  required: boolean;
+  description?: string;
+  scope: "global" | "step" | "execution";
+}
+
+export interface WorkflowSettings {
+  maxExecutionTime?: number;
+  retryPolicy?: {
+    maxRetries: number;
+    backoffStrategy: "linear" | "exponential";
+    initialDelay: number;
+  };
+  errorHandling?: {
+    strategy: "stop" | "continue" | "rollback";
+    notifyOnError: boolean;
+    errorWebhook?: string;
+  };
+  logging?: {
+    level: "none" | "basic" | "detailed";
+    retention: number; // days
+  };
+}
+
+// Integration types
+export interface Integration {
+  id: string;
+  name: string;
+  type: string;
+  provider: string;
+  config: IntegrationConfig;
+  status: "connected" | "disconnected" | "error" | "pending";
+  capabilities: string[];
+  rateLimit?: {
+    requests: number;
+    window: number; // seconds
+    remaining: number;
+  };
+  lastUsed?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface IntegrationConfig {
+  apiKey?: string;
+  baseUrl?: string;
+  version?: string;
+  timeout?: number;
+  headers?: Record<string, string>;
+  authentication?: {
+    type: "api_key" | "oauth" | "basic" | "bearer";
+    credentials: Record<string, any>;
+  };
+  customFields?: Record<string, any>;
+}
+
+// Intent and entity types for NLP
+export interface Intent {
+  name: string;
+  confidence: number;
+  parameters?: Record<string, any>;
+  examples?: string[];
+}
+
+export interface Entity {
+  name: string;
+  value: any;
+  confidence: number;
+  start?: number;
+  end?: number;
   metadata?: Record<string, any>;
 }
 
-export interface ConversationState {
-  // Core conversation state
-  context: ConversationContext;
-  messages: Message[];
-  turns: ConversationTurn[];
-  currentTurnId?: string;
-  
-  // Conversation metadata
-  title?: string;
-  tags?: string[];
-  
-  // Agent state
-  agentState?: Record<string, any>;
-  
-  // Conversation controls
-  isActive: boolean;
-  isPaused: boolean;
-  
-  // Error handling
-  error?: {
-    message: string;
-    code?: string;
-    timestamp: number;
+export interface NLPResult {
+  intent?: Intent;
+  entities: Entity[];
+  confidence: number;
+  processedText: string;
+  metadata?: Record<string, any>;
+}
+
+// Execution types
+export interface WorkflowExecution {
+  id: string;
+  workflowId: string;
+  status: "pending" | "running" | "completed" | "failed" | "cancelled";
+  startTime: number;
+  endTime?: number;
+  duration?: number;
+  triggeredBy: {
+    type: "manual" | "schedule" | "webhook" | "api";
+    userId?: string;
     metadata?: Record<string, any>;
   };
-  
-  // Performance metrics
-  metrics: {
-    totalTurns: number;
-    averageResponseTime: number;
-    totalTokens: number;
-    startTime: number;
-    endTime?: number;
-  };
-  
-  // Memory and context
-  shortTermMemory: any[];
-  longTermMemory?: any;
-  
-  // Conversation settings
-  settings: {
-    maxTurns?: number;
-    maxTokens?: number;
-    timeoutMs?: number;
-    temperature?: number;
-    modelName?: string;
+  steps: StepExecution[];
+  variables: Record<string, any>;
+  error?: ExecutionError;
+  logs: ExecutionLog[];
+  metrics: ExecutionMetrics;
+}
+
+export interface StepExecution {
+  stepId: string;
+  status: "pending" | "running" | "completed" | "failed" | "skipped";
+  startTime?: number;
+  endTime?: number;
+  duration?: number;
+  input?: any;
+  output?: any;
+  error?: string;
+  retryCount?: number;
+  logs: string[];
+}
+
+export interface ExecutionError {
+  code: string;
+  message: string;
+  stepId?: string;
+  stack?: string;
+  metadata?: Record<string, any>;
+  recoverable: boolean;
+}
+
+export interface ExecutionLog {
+  id: string;
+  timestamp: number;
+  level: "debug" | "info" | "warn" | "error";
+  message: string;
+  stepId?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface ExecutionMetrics {
+  totalSteps: number;
+  completedSteps: number;
+  failedSteps: number;
+  skippedSteps: number;
+  totalTime: number;
+  apiCallsUsed: number;
+  resourcesConsumed: {
+    memory?: number;
+    cpu?: number;
+    storage?: number;
   };
 }
 
-// Helper functions
-export function createInitialConversationState(
-  userId: string, 
-  initialMessage?: string,
-  metadata?: Record<string, any>
-): ConversationState {
-  const now = Date.now();
-  const conversationId = `conv_${now}_${Math.random().toString(36).substr(2, 9)}`;
-  
-  const initialState: ConversationState = {
-    context: {
-      conversationId,
-      userId,
-      createdAt: now,
-      updatedAt: now,
-      metadata: metadata || {},
-    },
-    messages: [],
-    turns: [],
-    isActive: true,
-    isPaused: false,
-    metrics: {
-      totalTurns: 0,
-      averageResponseTime: 0,
-      totalTokens: 0,
-      startTime: now,
-    },
-    shortTermMemory: [],
-    settings: {
-      maxTurns: 20,
-      maxTokens: 4000,
-      timeoutMs: 30000,
-      temperature: 0.7,
-      modelName: 'gpt-4',
-    },
-  };
-  
-  if (initialMessage) {
-    const message: Message = {
-      id: `msg_${Date.now()}`,
-      role: 'user',
-      content: initialMessage,
-      timestamp: now,
-    };
-    
-    initialState.messages.push(message);
-    
-    const turn: ConversationTurn = {
-      id: `turn_${Date.now()}`,
-      userMessage: message,
-      timestamp: now,
-      status: 'pending',
-    };
-    
-    initialState.turns.push(turn);
-    initialState.currentTurnId = turn.id;
-    initialState.metrics.totalTurns = 1;
-  }
-  
-  return initialState;
+// User and workspace types
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  role: "owner" | "admin" | "member" | "viewer";
+  permissions: Permission[];
+  preferences: UserPreferences;
+  createdAt: number;
+  updatedAt: number;
+  lastActiveAt?: number;
 }
 
-export function addMessageToState(
-  state: ConversationState,
-  message: Omit<Message, 'id' | 'timestamp'>
-): ConversationState {
-  const newMessage: Message = {
-    ...message,
-    id: `msg_${Date.now()}`,
-    timestamp: Date.now(),
-  };
-  
-  const updatedState = {
-    ...state,
-    messages: [...state.messages, newMessage],
-    context: {
-      ...state.context,
-      updatedAt: Date.now(),
-    },
-  };
-  
-  // If this is a user message, create a new turn
-  if (message.role === 'user') {
-    const newTurn: ConversationTurn = {
-      id: `turn_${Date.now()}`,
-      userMessage: newMessage,
-      timestamp: newMessage.timestamp,
-      status: 'pending',
-    };
-    
-    updatedState.turns = [...state.turns, newTurn];
-    updatedState.currentTurnId = newTurn.id;
-    updatedState.metrics.totalTurns = state.metrics.totalTurns + 1;
-  } 
-  // If this is an assistant message, update the current turn
-  else if (message.role === 'assistant' && state.currentTurnId) {
-    const turnIndex = updatedState.turns.findIndex(t => t.id === state.currentTurnId);
-    if (turnIndex !== -1) {
-      const updatedTurns = [...updatedState.turns];
-      updatedTurns[turnIndex] = {
-        ...updatedTurns[turnIndex],
-        assistantMessage: newMessage,
-        status: 'completed',
-      };
-      updatedState.turns = updatedTurns;
-    }
-  }
-  
-  return updatedState;
+export interface Permission {
+  resource: string;
+  actions: string[];
+  conditions?: Record<string, any>;
 }
 
-export function updateTurnStatus(
-  state: ConversationState,
-  turnId: string,
-  status: ConversationTurn['status'],
-  metadata?: Record<string, any>
-): ConversationState {
-  const turnIndex = state.turns.findIndex(t => t.id === turnId);
-  if (turnIndex === -1) return state;
-  
-  const updatedTurns = [...state.turns];
-  updatedTurns[turnIndex] = {
-    ...updatedTurns[turnIndex],
-    status,
-    metadata: {
-      ...updatedTurns[turnIndex].metadata,
-      ...metadata,
-    },
+export interface UserPreferences {
+  theme: "light" | "dark" | "auto";
+  language: string;
+  timezone: string;
+  notifications: {
+    email: boolean;
+    push: boolean;
+    workflow: boolean;
+    security: boolean;
   };
-  
-  return {
-    ...state,
-    turns: updatedTurns,
+  defaultSettings: {
+    workflowTimeout: number;
+    autoSave: boolean;
+    verboseLogging: boolean;
   };
 }
 
-export function addToShortTermMemory(
-  state: ConversationState,
-  memory: any
-): ConversationState {
-  return {
-    ...state,
-    shortTermMemory: [...state.shortTermMemory, memory],
-  };
+export interface Workspace {
+  id: string;
+  name: string;
+  description?: string;
+  plan: "free" | "pro" | "enterprise";
+  limits: WorkspaceLimits;
+  settings: WorkspaceSettings;
+  members: WorkspaceMember[];
+  integrations: string[]; // Integration IDs
+  createdAt: number;
+  updatedAt: number;
+  ownerId: string;
 }
 
-export function updateMetrics(
-  state: ConversationState,
-  updates: Partial<ConversationState['metrics']>
-): ConversationState {
-  return {
-    ...state,
-    metrics: {
-      ...state.metrics,
-      ...updates,
-    },
-  };
+export interface WorkspaceLimits {
+  maxWorkflows: number;
+  maxExecutions: number;
+  maxIntegrations: number;
+  maxMembers: number;
+  storageLimit: number; // bytes
+  apiCallsPerMonth: number;
 }
 
-export function updateSettings(
-  state: ConversationState,
-  updates: Partial<ConversationState['settings']>
-): ConversationState {
-  return {
-    ...state,
-    settings: {
-      ...state.settings,
-      ...updates,
-    },
-  };
+export interface WorkspaceSettings {
+  allowPublicWorkflows: boolean;
+  requireApprovalForIntegrations: boolean;
+  auditLogRetention: number; // days
+  allowExternalSharing: boolean;
+  ssoEnabled: boolean;
+  ssoProvider?: string;
 }
 
-export function endConversation(state: ConversationState): ConversationState {
-  return {
-    ...state,
-    isActive: false,
-    metrics: {
-      ...state.metrics,
-      endTime: Date.now(),
-    },
+export interface WorkspaceMember {
+  userId: string;
+  role: "owner" | "admin" | "member" | "viewer";
+  joinedAt: number;
+  invitedBy?: string;
+  permissions?: Permission[];
+}
+
+// Validation types
+export interface ValidationResult {
+  isValid: boolean;
+  errors: ValidationError[];
+  warnings: ValidationWarning[];
+  suggestions?: string[];
+  score?: number; // 0-100
+}
+
+export interface ValidationError {
+  code: string;
+  message: string;
+  severity: "low" | "medium" | "high" | "critical";
+  field?: string;
+  stepId?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface ValidationWarning {
+  code: string;
+  message: string;
+  field?: string;
+  stepId?: string;
+  suggestion?: string;
+  metadata?: Record<string, any>;
+}
+
+// Security types
+export interface SecurityContext {
+  userId: string;
+  workspaceId: string;
+  permissions: Permission[];
+  ipAddress?: string;
+  userAgent?: string;
+  sessionId?: string;
+  tokenExpiresAt?: number;
+  mfaVerified?: boolean;
+}
+
+export interface AuditLog {
+  id: string;
+  userId: string;
+  workspaceId: string;
+  action: string;
+  resource: string;
+  resourceId?: string;
+  timestamp: number;
+  ipAddress?: string;
+  userAgent?: string;
+  metadata?: Record<string, any>;
+  result: "success" | "failure";
+  error?: string;
+}
+
+// API types
+export interface APIResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+    details?: any;
   };
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+  metadata?: Record<string, any>;
+}
+
+export interface APIError {
+  code: string;
+  message: string;
+  statusCode: number;
+  details?: any;
+  timestamp: number;
+  requestId?: string;
+}
+
+// Queue and job types
+export interface QueueJob {
+  id: string;
+  type: string;
+  data: any;
+  priority: number;
+  delay?: number;
+  attempts: number;
+  maxAttempts: number;
+  createdAt: number;
+  processedAt?: number;
+  completedAt?: number;
+  failedAt?: number;
+  error?: string;
+  progress?: number;
+}
+
+// WebSocket message types
+export interface WebSocketMessage {
+  type: string;
+  data: any;
+  timestamp: number;
+  id?: string;
+  userId?: string;
+  workspaceId?: string;
+}
+
+// File upload types
+export interface FileUpload {
+  id: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  path: string;
+  url?: string;
+  uploadedBy: string;
+  uploadedAt: number;
+  metadata?: Record<string, any>;
+}
+
+// Notification types
+export interface Notification {
+  id: string;
+  userId: string;
+  type: "info" | "success" | "warning" | "error";
+  title: string;
+  message: string;
+  read: boolean;
+  actionUrl?: string;
+  actionText?: string;
+  createdAt: number;
+  expiresAt?: number;
+  metadata?: Record<string, any>;
+}
+
+// Analytics types
+export interface AnalyticsEvent {
+  id: string;
+  userId: string;
+  workspaceId: string;
+  event: string;
+  properties: Record<string, any>;
+  timestamp: number;
+  sessionId?: string;
+  source: string;
+}
+
+export interface AnalyticsReport {
+  id: string;
+  name: string;
+  type: "workflow" | "user" | "integration" | "execution";
+  filters: Record<string, any>;
+  dateRange: {
+    start: number;
+    end: number;
+  };
+  data: any[];
+  generatedAt: number;
+  generatedBy: string;
 }
