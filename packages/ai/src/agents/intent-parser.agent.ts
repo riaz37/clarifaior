@@ -1,6 +1,9 @@
 import { BaseAgent } from './base/base-agent';
 import { AgentConfig, AgentInput, AgentOutput, AgentExecution } from './base/agent.interface';
 
+// Re-export types
+export * from './base/agent.interface';
+
 export interface ParsedIntent {
   type: IntentType;
   entities: ExtractedEntity[];
@@ -52,6 +55,8 @@ export interface WorkflowStructure {
 }
 
 export class IntentParserAgent extends BaseAgent {
+  // Intent classification threshold (minimum confidence to consider an intent valid)
+
   constructor(config: AgentConfig) {
     super({
       ...config,
@@ -60,199 +65,220 @@ export class IntentParserAgent extends BaseAgent {
     });
   }
 
-  protected async executeInternal(input: AgentInput, execution: AgentExecution): Promise<AgentOutput> {
+  protected async executeInternal(
+    input: AgentInput,
+    execution: AgentExecution
+  ): Promise<AgentOutput> {
     const userInput = input.input;
     const context = input.context || {};
 
-    // Step 1: Extract entities
-    const entities = await this.executeStep(
-      'extract-entities',
-      { text: userInput },
-      execution,
-      () => this.extractEntities(userInput)
-    );
+    try {
+      // Step 1: Extract entities
+      const entities = await this.executeStep(
+        'extract-entities',
+        { text: userInput },
+        execution,
+        () => this.extractEntities(userInput)
+      );
 
-    // Step 2: Classify intent type
-    const intentType = await this.executeStep(
-      'classify-intent',
-      { text: userInput, entities },
-      execution,
-      () => this.classifyIntentType(userInput, entities)
-    );
+      // Step 2: Classify intent type
+      const intentType = await this.executeStep(
+        'classify-intent',
+        { text: userInput, entities },
+        execution,
+        () => this.classifyIntentType(userInput, entities)
+      );
 
-    // Step 3: Extract workflow structure
-    const workflowStructure = await this.executeStep(
-      'extract-structure',
-      { text: userInput, entities, intentType },
-      execution,
-      () => this.extractWorkflowStructure(userInput, entities, context)
-    );
+      // Step 3: Extract workflow structure
+      const workflowStructure = await this.executeStep(
+        'extract-structure',
+        { text: userInput, entities, intentType },
+        execution,
+        () => this.extractWorkflowStructure(userInput, entities, context)
+      );
 
-    // Step 4: Calculate confidence
-    const confidence = this.calculateConfidence(entities, intentType, workflowStructure);
+      // Step 4: Calculate confidence
+      const confidence = this.calculateConfidence(entities, intentType, workflowStructure);
 
-    const result: ParsedIntent = {
-      type: intentType,
-      entities,
-      structure: workflowStructure,
-      confidence,
-      originalInput: userInput,
-      context: context.summary,
-      metadata: {
-        processingTime: Date.now(),
-        entitiesFound: entities.length,
-        complexity: this.assessComplexity(workflowStructure)
-      }
-    };
+      const result: ParsedIntent = {
+        type: intentType,
+        entities,
+        structure: workflowStructure,
+        confidence,
+        originalInput: userInput,
+        context: context.summary,
+        metadata: {
+          processingTime: execution.steps.reduce((acc, step) => 
+            acc + ((step.endTime?.getTime() || 0) - (step.startTime?.getTime() || 0)), 0),
+          entitiesFound: entities.length,
+          complexity: this.assessComplexity(workflowStructure),
+        },
+      };
 
-    return {
-      output: result,
-      confidence,
-      reasoning: `Parsed intent with ${entities.length} entities and ${confidence * 100}% confidence`,
-      tokensUsed: execution.steps.reduce((total, step) => total + (step.metadata?.tokensUsed || 0), 0),
-      executionTime: Date.now() - execution.startTime.getTime()
-    };
+      return {
+        output: result,
+        confidence,
+        metadata: {
+          executionId: execution.executionId,
+          tokensUsed: execution.totalTokensUsed,
+          cost: execution.totalCost,
+        },
+      };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return this.handleError(new Error(errorMessage), 'Failed to parse intent');
+    }
   }
 
   private async extractEntities(text: string): Promise<ExtractedEntity[]> {
-    const prompt = `
-Extract workflow-related entities from this text: "${text}"
+    // In a real implementation, this would use NLP to extract entities
+    // For now, we'll use a simple regex-based approach
+    const entities: ExtractedEntity[] = [];
+    
+    // Simple pattern matching for demonstration
+    const patterns = [
+      { type: 'trigger', regex: /(when|if|on)\s+(\w+)/gi },
+      { type: 'action', regex: /(send|create|update|delete)\s+(\w+)/gi },
+      { type: 'integration', regex: /(slack|email|github|jira|salesforce)/gi },
+      { type: 'schedule', regex: /(every|daily|weekly|monthly)/gi },
+      { type: 'data', regex: /(data|file|document|record)/gi },
+    ];
 
-Identify and extract:
-1. TRIGGERS: Events that start workflows (email received, time-based, webhook, etc.)
-2. ACTIONS: Things to do (send message, create document, notify, etc.)
-3. INTEGRATIONS: Services mentioned (Gmail, Slack, Notion, etc.)
-4. CONDITIONS: If/when statements or filters
-5. SCHEDULE: Time-based patterns (daily, weekly, at 9am, etc.)
-6. DATA: Specific data to process or transform
-
-For each entity, provide:
-- type: one of [trigger, action, integration, condition, schedule, data]
-- value: the extracted text
-- confidence: 0-1 score
-- position: start and end character positions
-
-Return as JSON array of entities.
-`;
-
-    const response = await this.callLLM(prompt, {
-      temperature: 0.3,
-      structured: true,
-      schema: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            type: { type: 'string', enum: ['trigger', 'action', 'integration', 'condition', 'schedule', 'data'] },
-            value: { type: 'string' },
-            confidence: { type: 'number', minimum: 0, maximum: 1 },
-            position: {
-              type: 'object',
-              properties: {
-                start: { type: 'number' },
-                end: { type: 'number' }
-              }
-            }
-          }
-        }
+    patterns.forEach(({ type, regex }) => {
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        entities.push({
+          type: type as any,
+          value: match[0],
+          confidence: 0.8, // Base confidence
+          position: { start: match.index, end: match.index + match[0].length },
+          metadata: { matchedPattern: match[0] },
+        });
       }
     });
 
-    return response || [];
+    return entities;
   }
 
-  private async classifyIntentType(text: string, entities: ExtractedEntity[]): Promise<IntentType> {
-    const prompt = `
-Classify the user's intent based on their input and extracted entities.
-
-Input: "${text}"
-Entities: ${JSON.stringify(entities, null, 2)}
-
-Intent Types:
-- CREATE_WORKFLOW: User wants to create a new automated workflow
-- MODIFY_WORKFLOW: User wants to change an existing workflow
-- SCHEDULE_TASK: User wants to schedule a recurring task
-- INTEGRATE_SERVICE: User wants to connect a new service
-- AUTOMATE_PROCESS: User wants to automate a manual process
-- UNCLEAR: Intent is not clear or ambiguous
-
-Return only the intent type as a string.
-`;
-
-    const response = await this.callLLM(prompt, { temperature: 0.1 });
+  private async classifyIntentType(
+    text: string,
+    entities: ExtractedEntity[]
+  ): Promise<IntentType> {
+    // Simple keyword-based classification
+    const lowerText = text.toLowerCase();
     
-    // Parse and validate the response
-    const intentType = response.trim().toUpperCase();
-    if (Object.values(IntentType).includes(intentType as IntentType)) {
-      return intentType as IntentType;
+    if (/(create|make|build)\s+(a\s+)?workflow/.test(lowerText)) {
+      return IntentType.CREATE_WORKFLOW;
+    }
+    if (/(modify|update|change)\s+(a\s+)?workflow/.test(lowerText)) {
+      return IntentType.MODIFY_WORKFLOW;
+    }
+    if (/(schedule|set up|create)\s+(a\s+)?(recurring\s+)?task/.test(lowerText)) {
+      return IntentType.SCHEDULE_TASK;
+    }
+    if (/(connect|integrate|link)\s+with\s+\w+/.test(lowerText) || 
+        entities.some(e => e.type === 'integration')) {
+      return IntentType.INTEGRATE_SERVICE;
+    }
+    if (/(automate|simplify|streamline)\s+(process|task)/.test(lowerText)) {
+      return IntentType.AUTOMATE_PROCESS;
     }
     
     return IntentType.UNCLEAR;
   }
 
   private async extractWorkflowStructure(
-    text: string,
+    _text: string,
     entities: ExtractedEntity[],
-    context: any
+    _context: Record<string, any>
   ): Promise<WorkflowStructure> {
-    const prompt = `
-Extract the workflow structure from this input:
-
-Text: "${text}"
-Entities: ${JSON.stringify(entities, null, 2)}
-Context: ${JSON.stringify(context, null, 2)}
-
-Identify:
-1. TRIGGER: What event starts this workflow?
-2. ACTIONS: What actions should be performed?
-3. CONDITIONS: Any if/when conditions?
-4. SCHEDULE: Any time-based scheduling?
-
-Return a structured workflow definition as JSON.
-`;
-
-    const response = await this.callLLM(prompt, {
-      temperature: 0.2,
-      structured: true,
-      schema: {
-        type: 'object',
-        properties: {
-          trigger: {
-            type: 'object',
-            properties: {
-              type: { type: 'string' },
-              integration: { type: 'string' },
-              conditions: { type: 'array', items: { type: 'string' } }
-            }
-          },
-          actions: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                type: { type: 'string' },
-                integration: { type: 'string' },
-                parameters: { type: 'object' }
-              }
-            }
-          },
-          conditions: { type: 'array', items: { type: 'string' } },
-          schedule: {
-            type: 'object',
-            properties: {
-              frequency: { type: 'string' },
-              time: { type: 'string' },
-              timezone: { type: 'string' }
-            }
-          }
-        }
-      }
-    });
-
-    return response || {
+    const structure: WorkflowStructure = {
+      trigger: {
+        type: 'manual', // Default trigger
+        integration: 'user',
+        conditions: [],
+      },
       actions: [],
-      conditions: []
+      conditions: [],
     };
+
+    // Extract trigger
+    const triggerEntity = entities.find(e => e.type === 'trigger');
+    if (triggerEntity) {
+      structure.trigger = {
+        type: 'event',
+        integration: this.detectIntegration(triggerEntity.value, entities) || 'system',
+        conditions: this.extractConditions(triggerEntity.value),
+      };
+    }
+
+    // Extract actions
+    const actionEntities = entities.filter(e => e.type === 'action');
+    for (const entity of actionEntities) {
+      structure.actions.push({
+        type: 'action',
+        integration: this.detectIntegration(entity.value, entities) || 'custom',
+        parameters: this.extractParameters(entity.value),
+      });
+    }
+
+    // Extract schedule if present
+    const scheduleEntity = entities.find(e => e.type === 'schedule');
+    if (scheduleEntity) {
+      structure.schedule = {
+        frequency: this.extractFrequency(scheduleEntity.value),
+        time: this.extractTime(scheduleEntity.value),
+      };
+    }
+
+    return structure;
+  }
+
+  private extractConditions(text: string): string[] {
+    // Simple condition extraction
+    const conditions: string[] = [];
+    const conditionRegex = /if\s+(.+?)(?=\s+then|$)/gi;
+    let match;
+    
+    while ((match = conditionRegex.exec(text)) !== null) {
+      conditions.push(match[1].trim());
+    }
+    
+    return conditions.length > 0 ? conditions : ['always'];
+  }
+
+  private extractParameters(text: string): Record<string, any> {
+    // Simple parameter extraction
+    const params: Record<string, any> = {};
+    const paramRegex = /(\w+)\s*[:=]\s*([^,\s]+)/g;
+    let match;
+    
+    while ((match = paramRegex.exec(text)) !== null) {
+      params[match[1]] = match[2];
+    }
+    
+    return params;
+  }
+
+  private detectIntegration(text: string, entities: ExtractedEntity[]): string | undefined {
+    const integrationEntity = entities.find(e => 
+      e.type === 'integration' && 
+      text.toLowerCase().includes(e.value.toLowerCase())
+    );
+    return integrationEntity?.value;
+  }
+
+  private extractFrequency(text: string): string {
+    if (/daily|every day|each day/.test(text)) return 'daily';
+    if (/weekly|every week|each week/.test(text)) return 'weekly';
+    if (/monthly|every month|each month/.test(text)) return 'monthly';
+    if (/hourly|every hour/.test(text)) return 'hourly';
+    return 'once'; // Default
+  }
+
+  private extractTime(text: string): string {
+    const timeMatch = text.match(/\b(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\b/i);
+    return timeMatch ? timeMatch[1] : '09:00 AM'; // Default time
   }
 
   private calculateConfidence(
@@ -260,23 +286,86 @@ Return a structured workflow definition as JSON.
     intentType: IntentType,
     structure: WorkflowStructure
   ): number {
-    let confidence = 0.5; // Base confidence
+    let confidence = 0.7; // Base confidence
 
-    // Boost confidence based on entity clarity
-    const highConfidenceEntities = entities.filter(e => e.confidence > 0.8);
-    confidence += (highConfidenceEntities.length / Math.max(entities.length, 1)) * 0.3;
-
-    // Boost confidence based on structure completeness
-    if (structure.trigger && structure.actions.length > 0) {
-      confidence += 0.2;
+    // Increase confidence based on entities found
+    if (entities.length > 0) {
+      confidence += Math.min(0.2, entities.length * 0.05);
     }
 
-    // Adjust based on intent type clarity
+    // Increase confidence if we have a clear intent
     if (intentType !== IntentType.UNCLEAR) {
       confidence += 0.1;
     }
 
-    return Math.min(confidence, 1.0);
+    // Increase confidence if we have actions
+    if (structure.actions.length > 0) {
+      confidence += 0.1;
+    }
+
+    // Cap at 1.0
+    return Math.min(1.0, confidence);
+  }
+
+  private handleError(error: Error, defaultMessage: string): AgentOutput {
+    console.error('Intent parsing error:', error);
+    return {
+      output: {
+        type: IntentType.UNCLEAR,
+        entities: [],
+        structure: {
+          trigger: { type: 'manual', integration: 'system', conditions: [] },
+          actions: [],
+          conditions: [],
+        },
+        confidence: 0,
+        originalInput: '',
+        metadata: {
+          processingTime: 0,
+          entitiesFound: 0,
+          complexity: 'simple',
+          error: error.message,
+        },
+      },
+      confidence: 0,
+      metadata: {
+        error: {
+          message: defaultMessage,
+          details: error.message,
+        },
+      },
+    };
+  }
+
+  async validate(input: AgentInput): Promise<{ valid: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    if (!input.input || typeof input.input !== 'string' || input.input.trim() === '') {
+      errors.push('Input must be a non-empty string');
+    }
+
+    if (input.input && input.input.length > 10000) {
+      errors.push('Input is too long (max 10000 characters)');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  }
+
+  async callLLM(_prompt: string, _options: unknown): Promise<any> {
+    // This is a placeholder implementation
+    // In a real implementation, this would call an actual LLM
+    return {
+      trigger: {
+        type: 'manual',
+        integration: 'user',
+        conditions: []
+      },
+      actions: [],
+      conditions: []
+    };
   }
 
   private assessComplexity(structure: WorkflowStructure): 'simple' | 'medium' | 'complex' {

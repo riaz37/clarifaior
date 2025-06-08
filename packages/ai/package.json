@@ -16,6 +16,7 @@
     "@langchain/langgraph": "^0.0.1",
     "@langchain/openai": "^0.1.0",
     "openai": "^4.28.0",
+    "uuid": "^11.1.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
